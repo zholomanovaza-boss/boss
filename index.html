@@ -300,6 +300,34 @@
       white-space: nowrap;
       text-align: center;
       text-shadow: var(--label-shadow);
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .title-logos {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(4px, 0.7vw, 12px);
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+      flex: 0 1 auto;
+    }
+
+    .title-logos[hidden] {
+      display: none;
+    }
+
+    .title-logos img {
+      height: clamp(18px, 2.6vw, 46px);
+      width: auto;
+      max-width: 7vw;
+      flex: 0 1 auto;
+      object-fit: contain;
+      filter: drop-shadow(0 0.3vh 0.9vh rgba(0, 0, 0, 0.4));
+      pointer-events: none;
     }
 
     .el-logo {
@@ -1158,6 +1186,21 @@
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: #8ea0c4;
+    }
+
+    .title-logo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+    }
+
+    .title-logo-grid .logo-row {
+      gap: 6px;
+    }
+
+    .title-logo-grid .logo-preview {
+      width: 56px;
+      height: 32px;
     }
 
     /* ---------- Варианты табло ---------- */
@@ -2289,6 +2332,7 @@
             <img class="el-logo" id="logoImg" alt="Логотип" hidden>
             <span class="winner-badge" id="winnerBadge" hidden>🏆 <span id="winnerName"></span></span>
             <span class="live-badge" id="liveBadge" hidden><span class="live-dot"></span>LIVE</span>
+            <div class="title-logos" id="titleLogos" hidden></div>
             <div class="el-title" contenteditable spellcheck="false" id="matchTitle">ВОЛЕЙБОЛ</div>
             <div class="set-meta" id="setMeta">ПАРТИЯ 1 · ДО 25</div>
           </div>
@@ -2525,6 +2569,10 @@
           </select>
         </div>
         <div class="field full">
+          <label>Логотипы в заголовке (до 10, рядом с текстом заголовка)</label>
+          <div class="title-logo-grid" id="titleLogoGrid"></div>
+        </div>
+        <div class="field full">
           <label>Логотипы команд (PNG/SVG/JPG, до 12 МБ — сожмутся автоматически)</label>
           <div class="team-logo-grid">
             <div>
@@ -2657,6 +2705,7 @@
       const SETS_STYLE = params.get('style') === 'sets';
       const LS_KEY = 'arena-volley-v2';
       const MAX_TIMEOUTS = 2;
+      const TITLE_LOGO_COUNT = 10;
 
       const FONTS = {
         bebas: '"Bebas Neue", "Oswald", Roboto, system-ui, sans-serif',
@@ -2764,6 +2813,7 @@
           logo: '',
           logoHeight: 64,
           logoPos: 'left',
+          titleLogos: [],
           teamLogoA: '',
           teamLogoB: '',
           teamLogoHeight: 56,
@@ -2844,6 +2894,9 @@
         s.design.logo = typeof s.design.logo === 'string' && s.design.logo.length <= 400000 ? s.design.logo : '';
         s.design.logoHeight = clamp(Math.round(Number(s.design.logoHeight) || 64), 16, 200);
         s.design.logoPos = s.design.logoPos === 'right' ? 'right' : 'left';
+        s.design.titleLogos = Array.isArray(s.design.titleLogos)
+          ? s.design.titleLogos.slice(0, TITLE_LOGO_COUNT).map((x) => (typeof x === 'string' && x.length <= 320000 ? x : ''))
+          : [];
         s.design.teamLogoA = typeof s.design.teamLogoA === 'string' && s.design.teamLogoA.length <= 400000 ? s.design.teamLogoA : '';
         s.design.teamLogoB = typeof s.design.teamLogoB === 'string' && s.design.teamLogoB.length <= 400000 ? s.design.teamLogoB : '';
         s.design.teamLogoHeight = clamp(Math.round(Number(s.design.teamLogoHeight) || 56), 16, 600);
@@ -2906,6 +2959,7 @@
       let lastScores = { A: null, B: null };
       let audioCtx = null;
       let pendingLogo = '';
+      let pendingTitleLogos = [];
       const pendingTeamLogo = { A: '', B: '' };
       const pendingYtLogo = { A: '', B: '' };
       let pendingBgImage = '';
@@ -2928,6 +2982,7 @@
         liveBadge: $('#liveBadge'),
         setsRow: $('#midSetsRow'),
         titleBox: $('.box-title'),
+        titleLogos: $('#titleLogos'),
         logo: $('#logoImg'),
         logoPreview: $('#logoPreview'),
         teamLogo: { A: $('#teamLogoA'), B: $('#teamLogoB') },
@@ -3374,6 +3429,7 @@
         ui.body.classList.toggle('display', DISPLAY);
 
         ui.matchTitle.textContent = state.titles.match;
+        renderTitleLogos();
 
         ['A', 'B'].forEach((t) => {
           if (document.activeElement !== ui.name[t]) ui.name[t].textContent = state.names[t];
@@ -3406,6 +3462,23 @@
         renderSets();
         renderControls();
         ui.soundBtn.textContent = state.settings.sound ? '🔊' : '🔇';
+        requestFit();
+      }
+
+      let lastTitleLogosKey = null;
+      function renderTitleLogos() {
+        const logos = (state.design.titleLogos || []).filter(Boolean).slice(0, TITLE_LOGO_COUNT);
+        const key = logos.join('|');
+        if (key === lastTitleLogosKey) return;
+        lastTitleLogosKey = key;
+        ui.titleLogos.hidden = logos.length === 0;
+        ui.titleLogos.replaceChildren();
+        logos.forEach((src) => {
+          const img = document.createElement('img');
+          img.src = src;
+          img.alt = '';
+          ui.titleLogos.appendChild(img);
+        });
         requestFit();
       }
 
@@ -3702,6 +3775,13 @@
         f.elements.logo.value = '';
         pendingLogo = state.design.logo;
         updateLogoPreview();
+        const savedTitleLogos = state.design.titleLogos || [];
+        pendingTitleLogos = [];
+        for (let i = 0; i < TITLE_LOGO_COUNT; i += 1) {
+          titleLogoInputs[i].value = '';
+          pendingTitleLogos.push(typeof savedTitleLogos[i] === 'string' ? savedTitleLogos[i] : '');
+          updateTitleLogoPreview(i);
+        }
         f.elements.teamLogoA.value = '';
         f.elements.teamLogoB.value = '';
         f.elements.teamLogoHeight.value = state.design.teamLogoHeight;
@@ -3749,6 +3829,12 @@
         const has = Boolean(pendingLogo);
         ui.logoPreview.src = has ? pendingLogo : '';
         ui.logoPreview.classList.toggle('on', has);
+      }
+
+      function updateTitleLogoPreview(index) {
+        const src = pendingTitleLogos[index] || '';
+        titleLogoPreviews[index].src = src;
+        titleLogoPreviews[index].classList.toggle('on', Boolean(src));
       }
 
       function updateTeamLogoPreview(team) {
@@ -3864,6 +3950,56 @@
           })
           .catch((err) => showToast(err && err.message ? err.message : 'Не удалось загрузить картинку'));
       }
+
+      const titleLogoInputs = [];
+      const titleLogoPreviews = [];
+      (function buildTitleLogoFields() {
+        const grid = $('#titleLogoGrid');
+        if (!grid) return;
+        for (let i = 0; i < TITLE_LOGO_COUNT; i += 1) {
+          const item = document.createElement('div');
+          const head = document.createElement('div');
+          head.className = 'team-logo-head';
+          head.textContent = 'ЛОГО ' + (i + 1);
+          const row = document.createElement('div');
+          row.className = 'logo-row';
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = 'image/*';
+          input.id = 'fTitleLogo' + (i + 1);
+          const clear = document.createElement('button');
+          clear.type = 'button';
+          clear.className = 'btn small';
+          clear.textContent = 'УБРАТЬ';
+          const preview = document.createElement('span');
+          preview.className = 'logo-preview';
+          const img = document.createElement('img');
+          img.alt = '';
+          preview.appendChild(img);
+          row.append(input, clear, preview);
+          item.append(head, row);
+          grid.appendChild(item);
+
+          input.addEventListener('change', () => {
+            pickImage(input, {
+              maxSide: 320,
+              maxChars: 200000,
+              done: (src) => {
+                pendingTitleLogos[i] = src;
+                updateTitleLogoPreview(i);
+              }
+            });
+          });
+          clear.addEventListener('click', () => {
+            pendingTitleLogos[i] = '';
+            input.value = '';
+            updateTitleLogoPreview(i);
+          });
+
+          titleLogoInputs.push(input);
+          titleLogoPreviews.push(img);
+        }
+      })();
 
       ui.settingsForm.elements.theme.addEventListener('change', () => {
         const palette = THEMES[ui.settingsForm.elements.theme.value];
@@ -4094,6 +4230,7 @@
         state.design.logoHeight = clamp(Math.round(Number(f.elements.logoHeight.value) || 64), 16, 200);
         state.design.logoPos = f.elements.logoPos.value === 'right' ? 'right' : 'left';
         state.design.logo = pendingLogo;
+        state.design.titleLogos = pendingTitleLogos.slice(0, TITLE_LOGO_COUNT).map((x) => (typeof x === 'string' ? x : ''));
         state.design.teamLogoA = pendingTeamLogo.A;
         state.design.teamLogoB = pendingTeamLogo.B;
         state.design.teamLogoHeight = clamp(Math.round(Number(f.elements.teamLogoHeight.value) || 56), 16, 600);
