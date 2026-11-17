@@ -318,7 +318,7 @@
       justify-content: center;
       gap: clamp(4px, 0.7vw, 12px);
       min-width: 0;
-      max-width: 55%;
+      max-width: 42%;
       overflow: hidden;
       flex: 0 1 auto;
     }
@@ -328,10 +328,10 @@
     }
 
     .title-logos img {
-      height: var(--title-logo-height, 64px);
-      max-height: 12vh;
+      height: var(--title-logo-height, 120px);
+      max-height: 20vh;
       width: auto;
-      max-width: 10vw;
+      max-width: 12vw;
       min-width: 0;
       flex: 0 1 auto;
       object-fit: contain;
@@ -2341,8 +2341,9 @@
             <img class="el-logo" id="logoImg" alt="Логотип" hidden>
             <span class="winner-badge" id="winnerBadge" hidden>🏆 <span id="winnerName"></span></span>
             <span class="live-badge" id="liveBadge" hidden><span class="live-dot"></span>LIVE</span>
-            <div class="title-logos" id="titleLogos" hidden></div>
+            <div class="title-logos" id="titleLogosLeft" hidden></div>
             <div class="el-title" contenteditable spellcheck="false" id="matchTitle">ВОЛЕЙБОЛ</div>
+            <div class="title-logos" id="titleLogosRight" hidden></div>
             <div class="set-meta" id="setMeta">ПАРТИЯ 1 · ДО 25</div>
           </div>
 
@@ -2582,8 +2583,8 @@
           <div class="title-logo-grid" id="titleLogoGrid"></div>
         </div>
         <div class="field">
-          <label for="fTitleLogoHeight">Размер логотипов в заголовке, px (до 160)</label>
-          <input id="fTitleLogoHeight" name="titleLogoHeight" type="number" min="16" max="160" step="1">
+          <label for="fTitleLogoHeight">Размер логотипов в заголовке, px (до 320)</label>
+          <input id="fTitleLogoHeight" name="titleLogoHeight" type="number" min="16" max="320" step="1">
         </div>
         <div class="field full">
           <label>Логотипы команд (PNG/SVG/JPG, до 12 МБ — сожмутся автоматически)</label>
@@ -2827,7 +2828,7 @@
           logoHeight: 64,
           logoPos: 'left',
           titleLogos: [],
-          titleLogoHeight: 64,
+          titleLogoHeight: 120,
           teamLogoA: '',
           teamLogoB: '',
           teamLogoHeight: 56,
@@ -2911,7 +2912,7 @@
         s.design.titleLogos = Array.isArray(s.design.titleLogos)
           ? s.design.titleLogos.slice(0, TITLE_LOGO_COUNT).map((x) => (typeof x === 'string' && x.length <= 320000 ? x : ''))
           : [];
-        s.design.titleLogoHeight = clamp(Math.round(Number(s.design.titleLogoHeight) || 64), 16, 160);
+        s.design.titleLogoHeight = clamp(Math.round(Number(s.design.titleLogoHeight) || 120), 16, 320);
         s.design.teamLogoA = typeof s.design.teamLogoA === 'string' && s.design.teamLogoA.length <= 400000 ? s.design.teamLogoA : '';
         s.design.teamLogoB = typeof s.design.teamLogoB === 'string' && s.design.teamLogoB.length <= 400000 ? s.design.teamLogoB : '';
         s.design.teamLogoHeight = clamp(Math.round(Number(s.design.teamLogoHeight) || 56), 16, 600);
@@ -2997,7 +2998,8 @@
         liveBadge: $('#liveBadge'),
         setsRow: $('#midSetsRow'),
         titleBox: $('.box-title'),
-        titleLogos: $('#titleLogos'),
+        titleLogosLeft: $('#titleLogosLeft'),
+        titleLogosRight: $('#titleLogosRight'),
         logo: $('#logoImg'),
         logoPreview: $('#logoPreview'),
         teamLogo: { A: $('#teamLogoA'), B: $('#teamLogoB') },
@@ -3487,13 +3489,16 @@
         const key = logos.join('|');
         if (key === lastTitleLogosKey) return;
         lastTitleLogosKey = key;
-        ui.titleLogos.hidden = logos.length === 0;
-        ui.titleLogos.replaceChildren();
-        logos.forEach((src) => {
-          const img = document.createElement('img');
-          img.src = src;
-          img.alt = '';
-          ui.titleLogos.appendChild(img);
+        const half = Math.ceil(logos.length / 2);
+        [[ui.titleLogosLeft, logos.slice(0, half)], [ui.titleLogosRight, logos.slice(half)]].forEach(([row, items]) => {
+          row.hidden = items.length === 0;
+          row.replaceChildren();
+          items.forEach((src) => {
+            const img = document.createElement('img');
+            img.src = src;
+            img.alt = '';
+            row.appendChild(img);
+          });
         });
         requestFit();
       }
@@ -4113,6 +4118,12 @@
         updateLogoPreview();
       });
 
+      ui.settingsForm.elements.titleLogoHeight.addEventListener('input', () => {
+        const value = clamp(Math.round(Number(ui.settingsForm.elements.titleLogoHeight.value) || 120), 16, 320);
+        ui.body.style.setProperty('--title-logo-height', value + 'px');
+        requestFit();
+      });
+
       [['A', 'fTeamLogoA', 'teamLogoAClear'], ['B', 'fTeamLogoB', 'teamLogoBClear']].forEach(([team, inputId, clearId]) => {
         const input = document.getElementById(inputId);
         input.addEventListener('change', () => {
@@ -4248,7 +4259,7 @@
         state.design.logoPos = f.elements.logoPos.value === 'right' ? 'right' : 'left';
         state.design.logo = pendingLogo;
         state.design.titleLogos = pendingTitleLogos.slice(0, TITLE_LOGO_COUNT).map((x) => (typeof x === 'string' ? x : ''));
-        state.design.titleLogoHeight = clamp(Math.round(Number(f.elements.titleLogoHeight.value) || 64), 16, 160);
+        state.design.titleLogoHeight = clamp(Math.round(Number(f.elements.titleLogoHeight.value) || 120), 16, 320);
         state.design.teamLogoA = pendingTeamLogo.A;
         state.design.teamLogoB = pendingTeamLogo.B;
         state.design.teamLogoHeight = clamp(Math.round(Number(f.elements.teamLogoHeight.value) || 56), 16, 600);
@@ -7407,9 +7418,10 @@ YouTube — сеты (как KeepTheScore)**. У этого табло **сво�
   у третьего табло (KeepTheScore), четвёртого (YouTube) и пятого (YouTube — сеты)
   цвета и шрифт свои — форма переключается на них автоматически при выборе варианта;
 - логотип: PNG / SVG / JPG, размер и положение слева или справа в шапке табло;
-- **до 10 логотипов в шапке рядом с текстом заголовка** — загружаются в настройках
-  («Логотипы в заголовке»), размер отдельно настраивается полем «Размер логотипов в заголовке, px»
-  (до 160 px), текст заголовка остаётся редактируемым прямо на табло;
+- **до 10 логотипов в шапке по бокам от текста заголовка** — загружаются в настройках
+  («Логотипы в заголовке»), делятся поровну на левую и правую группы, текст остаётся в середине
+  и редактируется прямо на табло; размер настраивается полем «Размер логотипов в заголовке, px»
+  (до 320 px);
 - логотипы команд A и B: отдельные файлы и общий размер (до 600 px);
   отдельно можно задать логотипы и размер **только для YouTube** (`board4.html` / `board5.html`, до 600 px):
   если YouTube-логотипы не загружены, эти табло используют общие логотипы;
