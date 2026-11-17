@@ -313,12 +313,14 @@
     }
 
     .title-logos {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: clamp(4px, 0.7vw, 12px);
+      --cell: min(var(--title-logo-height, 120px), var(--cell-w, 15vw), var(--cell-h, 22vh));
+      display: grid;
+      grid-auto-rows: var(--cell);
+      gap: clamp(3px, 0.4vw, 8px);
+      align-content: center;
+      justify-items: center;
       min-width: 0;
-      max-width: 42%;
+      max-width: 48%;
       overflow: hidden;
       flex: 0 1 auto;
     }
@@ -328,12 +330,9 @@
     }
 
     .title-logos img {
-      height: var(--title-logo-height, 120px);
-      max-height: 20vh;
-      width: auto;
-      max-width: 12vw;
+      width: 100%;
+      height: 100%;
       min-width: 0;
-      flex: 0 1 auto;
       object-fit: contain;
       filter: drop-shadow(0 0.3vh 0.9vh rgba(0, 0, 0, 0.4));
       pointer-events: none;
@@ -2583,8 +2582,8 @@
           <div class="title-logo-grid" id="titleLogoGrid"></div>
         </div>
         <div class="field">
-          <label for="fTitleLogoHeight">Размер логотипов в заголовке, px (до 320)</label>
-          <input id="fTitleLogoHeight" name="titleLogoHeight" type="number" min="16" max="320" step="1">
+          <label for="fTitleLogoHeight">Размер логотипов в заголовке, px (до 1000)</label>
+          <input id="fTitleLogoHeight" name="titleLogoHeight" type="number" min="16" max="1000" step="1">
         </div>
         <div class="field full">
           <label>Логотипы команд (PNG/SVG/JPG, до 12 МБ — сожмутся автоматически)</label>
@@ -2912,7 +2911,7 @@
         s.design.titleLogos = Array.isArray(s.design.titleLogos)
           ? s.design.titleLogos.slice(0, TITLE_LOGO_COUNT).map((x) => (typeof x === 'string' && x.length <= 320000 ? x : ''))
           : [];
-        s.design.titleLogoHeight = clamp(Math.round(Number(s.design.titleLogoHeight) || 120), 16, 320);
+        s.design.titleLogoHeight = clamp(Math.round(Number(s.design.titleLogoHeight) || 120), 16, 1000);
         s.design.teamLogoA = typeof s.design.teamLogoA === 'string' && s.design.teamLogoA.length <= 400000 ? s.design.teamLogoA : '';
         s.design.teamLogoB = typeof s.design.teamLogoB === 'string' && s.design.teamLogoB.length <= 400000 ? s.design.teamLogoB : '';
         s.design.teamLogoHeight = clamp(Math.round(Number(s.design.teamLogoHeight) || 56), 16, 600);
@@ -3493,14 +3492,40 @@
         [[ui.titleLogosLeft, logos.slice(0, half)], [ui.titleLogosRight, logos.slice(half)]].forEach(([row, items]) => {
           row.hidden = items.length === 0;
           row.replaceChildren();
-          items.forEach((src) => {
+          if (!items.length) return;
+          const cols = items.length <= 3 ? items.length : items.length === 4 ? 2 : 3;
+          const rows = Math.ceil(items.length / cols);
+          row.style.gridTemplateColumns = `repeat(${cols}, var(--cell))`;
+          row.style.setProperty('--cell-w', (46 / cols) + 'vw');
+          row.style.setProperty('--cell-h', (44 / rows) + 'vh');
+          items.forEach((src, index) => {
             const img = document.createElement('img');
             img.src = src;
             img.alt = '';
+            const rowIndex = Math.floor(index / cols);
+            const lastCount = items.length - rowIndex * cols;
+            if (rowIndex === rows - 1 && lastCount < cols) {
+              const middle = Math.floor(lastCount / 2);
+              img.style.justifySelf = index - rowIndex * cols < middle
+                ? 'end'
+                : index - rowIndex * cols > middle ? 'start' : 'center';
+            }
             row.appendChild(img);
           });
         });
+        updateTitleLogoCells();
         requestFit();
+      }
+
+      function updateTitleLogoCells() {
+        const cap = window.innerHeight >= 900 ? 52 : 44;
+        [ui.titleLogosLeft, ui.titleLogosRight].forEach((row) => {
+          const count = row.querySelectorAll('img').length;
+          if (!count) return;
+          const cols = count <= 3 ? count : count === 4 ? 2 : 3;
+          const rows = Math.ceil(count / cols);
+          row.style.setProperty('--cell-h', (cap / rows) + 'vh');
+        });
       }
 
       function requestFit() {
@@ -3587,7 +3612,10 @@
         }
       }
 
-      window.addEventListener('resize', requestFit);
+      window.addEventListener('resize', () => {
+        updateTitleLogoCells();
+        requestFit();
+      });
       window.addEventListener('orientationchange', requestFit);
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(requestFit).catch(() => null);
 
@@ -4119,7 +4147,7 @@
       });
 
       ui.settingsForm.elements.titleLogoHeight.addEventListener('input', () => {
-        const value = clamp(Math.round(Number(ui.settingsForm.elements.titleLogoHeight.value) || 120), 16, 320);
+        const value = clamp(Math.round(Number(ui.settingsForm.elements.titleLogoHeight.value) || 120), 16, 1000);
         ui.body.style.setProperty('--title-logo-height', value + 'px');
         requestFit();
       });
@@ -4259,7 +4287,7 @@
         state.design.logoPos = f.elements.logoPos.value === 'right' ? 'right' : 'left';
         state.design.logo = pendingLogo;
         state.design.titleLogos = pendingTitleLogos.slice(0, TITLE_LOGO_COUNT).map((x) => (typeof x === 'string' ? x : ''));
-        state.design.titleLogoHeight = clamp(Math.round(Number(f.elements.titleLogoHeight.value) || 120), 16, 320);
+        state.design.titleLogoHeight = clamp(Math.round(Number(f.elements.titleLogoHeight.value) || 120), 16, 1000);
         state.design.teamLogoA = pendingTeamLogo.A;
         state.design.teamLogoB = pendingTeamLogo.B;
         state.design.teamLogoHeight = clamp(Math.round(Number(f.elements.teamLogoHeight.value) || 56), 16, 600);
@@ -7421,7 +7449,7 @@ YouTube — сеты (как KeepTheScore)**. У этого табло **сво�
 - **до 10 логотипов в шапке по бокам от текста заголовка** — загружаются в настройках
   («Логотипы в заголовке»), делятся поровну на левую и правую группы, текст остаётся в середине
   и редактируется прямо на табло; размер настраивается полем «Размер логотипов в заголовке, px»
-  (до 320 px);
+  (до 1000 px, автоматически подгоняется под окно, чтобы не было переполнения);
 - логотипы команд A и B: отдельные файлы и общий размер (до 600 px);
   отдельно можно задать логотипы и размер **только для YouTube** (`board4.html` / `board5.html`, до 600 px):
   если YouTube-логотипы не загружены, эти табло используют общие логотипы;
