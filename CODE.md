@@ -318,7 +318,7 @@
       justify-content: center;
       gap: clamp(4px, 0.7vw, 12px);
       min-width: 0;
-      max-width: 100%;
+      max-width: 55%;
       overflow: hidden;
       flex: 0 1 auto;
     }
@@ -328,9 +328,11 @@
     }
 
     .title-logos img {
-      height: clamp(18px, 2.6vw, 46px);
+      height: var(--title-logo-height, 64px);
+      max-height: 12vh;
       width: auto;
-      max-width: 7vw;
+      max-width: 10vw;
+      min-width: 0;
       flex: 0 1 auto;
       object-fit: contain;
       filter: drop-shadow(0 0.3vh 0.9vh rgba(0, 0, 0, 0.4));
@@ -2579,6 +2581,10 @@
           <label>Логотипы в заголовке (до 10, рядом с текстом заголовка)</label>
           <div class="title-logo-grid" id="titleLogoGrid"></div>
         </div>
+        <div class="field">
+          <label for="fTitleLogoHeight">Размер логотипов в заголовке, px (до 160)</label>
+          <input id="fTitleLogoHeight" name="titleLogoHeight" type="number" min="16" max="160" step="1">
+        </div>
         <div class="field full">
           <label>Логотипы команд (PNG/SVG/JPG, до 12 МБ — сожмутся автоматически)</label>
           <div class="team-logo-grid">
@@ -2821,6 +2827,7 @@
           logoHeight: 64,
           logoPos: 'left',
           titleLogos: [],
+          titleLogoHeight: 64,
           teamLogoA: '',
           teamLogoB: '',
           teamLogoHeight: 56,
@@ -2904,6 +2911,7 @@
         s.design.titleLogos = Array.isArray(s.design.titleLogos)
           ? s.design.titleLogos.slice(0, TITLE_LOGO_COUNT).map((x) => (typeof x === 'string' && x.length <= 320000 ? x : ''))
           : [];
+        s.design.titleLogoHeight = clamp(Math.round(Number(s.design.titleLogoHeight) || 64), 16, 160);
         s.design.teamLogoA = typeof s.design.teamLogoA === 'string' && s.design.teamLogoA.length <= 400000 ? s.design.teamLogoA : '';
         s.design.teamLogoB = typeof s.design.teamLogoB === 'string' && s.design.teamLogoB.length <= 400000 ? s.design.teamLogoB : '';
         s.design.teamLogoHeight = clamp(Math.round(Number(s.design.teamLogoHeight) || 56), 16, 600);
@@ -3383,6 +3391,7 @@
         ui.body.style.setProperty('--away-fg', palette.awayFg);
         if (ui.liveBadge) ui.liveBadge.hidden = !(yt || sets);
         ui.body.style.setProperty('--logo-height', d.logoHeight + 'px');
+        ui.body.style.setProperty('--title-logo-height', d.titleLogoHeight + 'px');
         ui.body.style.setProperty('--team-logo-height', d.teamLogoHeight + 'px');
         ui.body.style.setProperty('--youtube-logo-height', d.youtubeLogoHeight + 'px');
 
@@ -3782,6 +3791,7 @@
         f.elements.logo.value = '';
         pendingLogo = state.design.logo;
         updateLogoPreview();
+        f.elements.titleLogoHeight.value = state.design.titleLogoHeight;
         const savedTitleLogos = state.design.titleLogos || [];
         pendingTitleLogos = [];
         for (let i = 0; i < TITLE_LOGO_COUNT; i += 1) {
@@ -4238,6 +4248,7 @@
         state.design.logoPos = f.elements.logoPos.value === 'right' ? 'right' : 'left';
         state.design.logo = pendingLogo;
         state.design.titleLogos = pendingTitleLogos.slice(0, TITLE_LOGO_COUNT).map((x) => (typeof x === 'string' ? x : ''));
+        state.design.titleLogoHeight = clamp(Math.round(Number(f.elements.titleLogoHeight.value) || 64), 16, 160);
         state.design.teamLogoA = pendingTeamLogo.A;
         state.design.teamLogoB = pendingTeamLogo.B;
         state.design.teamLogoHeight = clamp(Math.round(Number(f.elements.teamLogoHeight.value) || 56), 16, 600);
@@ -7397,7 +7408,8 @@ YouTube — сеты (как KeepTheScore)**. У этого табло **сво�
   цвета и шрифт свои — форма переключается на них автоматически при выборе варианта;
 - логотип: PNG / SVG / JPG, размер и положение слева или справа в шапке табло;
 - **до 10 логотипов в шапке рядом с текстом заголовка** — загружаются в настройках
-  («Логотипы в заголовке»), текст заголовка остаётся редактируемым прямо на табло;
+  («Логотипы в заголовке»), размер отдельно настраивается полем «Размер логотипов в заголовке, px»
+  (до 160 px), текст заголовка остаётся редактируемым прямо на табло;
 - логотипы команд A и B: отдельные файлы и общий размер (до 600 px);
   отдельно можно задать логотипы и размер **только для YouTube** (`board4.html` / `board5.html`, до 600 px):
   если YouTube-логотипы не загружены, эти табло используют общие логотипы;
