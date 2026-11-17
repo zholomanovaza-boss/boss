@@ -1,5 +1,10 @@
 # 🌍 Как открыть табло в интернете
 
+> **Уже задеплоено:** [https://arena-volley.onrender.com/](https://arena-volley.onrender.com/)
+> (Render Free, Frankfurt, репозиторий
+> [github.com/zholomanovaza-boss/boss](https://github.com/zholomanovaza-boss/boss)).
+> Синхронизация через `wss://` проверена с двух клиентов, `/health` возвращает `ok: true`.
+
 Табло работает как обычный сайт, но ему нужен **Node.js-хостинг с поддержкой WebSocket**.
 Статические хостинги (Netlify, GitHub Pages, обычный Vercel) не подойдут: синхронизация
 счёта идёт через WebSocket, а не через HTTP.

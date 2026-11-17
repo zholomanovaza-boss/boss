@@ -2541,6 +2541,27 @@
           <input id="fTeamLogoHeight" name="teamLogoHeight" type="number" min="16" max="160" step="1">
         </div>
         <div class="field full">
+          <label>Логотипы команд только для YouTube (board4 / board5). Если не заданы — используются общие логотипы выше</label>
+          <div class="team-logo-grid">
+            <div>
+              <div class="team-logo-head">Команда A — YouTube</div>
+              <div class="logo-row">
+                <input id="fYtLogoA" name="youtubeLogoA" type="file" accept="image/*">
+                <button class="btn small" type="button" id="ytLogoAClear">Убрать</button>
+                <span class="logo-preview"><img id="ytLogoAPreview" alt=""></span>
+              </div>
+            </div>
+            <div>
+              <div class="team-logo-head">Команда B — YouTube</div>
+              <div class="logo-row">
+                <input id="fYtLogoB" name="youtubeLogoB" type="file" accept="image/*">
+                <button class="btn small" type="button" id="ytLogoBClear">Убрать</button>
+                <span class="logo-preview"><img id="ytLogoBPreview" alt=""></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="field full">
           <label for="fBgImage">Фон табло (PNG / JPG / WEBP, до 12 МБ)</label>
           <div class="logo-row">
             <input id="fBgImage" name="bgImage" type="file" accept="image/*">
@@ -2733,6 +2754,8 @@
           teamLogoA: '',
           teamLogoB: '',
           teamLogoHeight: 56,
+          youtubeLogoA: '',
+          youtubeLogoB: '',
           bgImage: '',
           bgFit: 'cover',
           bgDim: 35,
@@ -2810,6 +2833,8 @@
         s.design.teamLogoA = typeof s.design.teamLogoA === 'string' && s.design.teamLogoA.length <= 400000 ? s.design.teamLogoA : '';
         s.design.teamLogoB = typeof s.design.teamLogoB === 'string' && s.design.teamLogoB.length <= 400000 ? s.design.teamLogoB : '';
         s.design.teamLogoHeight = clamp(Math.round(Number(s.design.teamLogoHeight) || 56), 16, 160);
+        s.design.youtubeLogoA = typeof s.design.youtubeLogoA === 'string' && s.design.youtubeLogoA.length <= 400000 ? s.design.youtubeLogoA : '';
+        s.design.youtubeLogoB = typeof s.design.youtubeLogoB === 'string' && s.design.youtubeLogoB.length <= 400000 ? s.design.youtubeLogoB : '';
         s.design.bgImage = safeImage(s.design.bgImage, 2400000);
         s.design.homeImage = safeImage(s.design.homeImage, 1200000);
         s.design.awayImage = safeImage(s.design.awayImage, 1200000);
@@ -2867,6 +2892,7 @@
       let audioCtx = null;
       let pendingLogo = '';
       const pendingTeamLogo = { A: '', B: '' };
+      const pendingYtLogo = { A: '', B: '' };
       let pendingBgImage = '';
       let pendingHomeImage = '';
       let pendingAwayImage = '';
@@ -2891,6 +2917,7 @@
         logoPreview: $('#logoPreview'),
         teamLogo: { A: $('#teamLogoA'), B: $('#teamLogoB') },
         teamLogoPreview: { A: $('#teamLogoAPreview'), B: $('#teamLogoBPreview') },
+        ytLogoPreview: { A: $('#ytLogoAPreview'), B: $('#ytLogoBPreview') },
         bgLayer: $('#bgLayer'),
         bgShade: $('#bgShade'),
         bgImagePreview: $('#bgImagePreview'),
@@ -3303,7 +3330,9 @@
         });
 
         ['A', 'B'].forEach((team) => {
-          const src = team === 'A' ? d.teamLogoA : d.teamLogoB;
+          // На YouTube-табло (board4/board5) свои логотипы; если они не заданы — общие.
+          const ytSrc = team === 'A' ? d.youtubeLogoA : d.youtubeLogoB;
+          const src = (yt || sets) && ytSrc ? ytSrc : (team === 'A' ? d.teamLogoA : d.teamLogoB);
           const img = ui.teamLogo[team];
           const has = Boolean(src);
           img.hidden = !has;
@@ -3664,6 +3693,12 @@
         pendingTeamLogo.B = state.design.teamLogoB;
         updateTeamLogoPreview('A');
         updateTeamLogoPreview('B');
+        f.elements.youtubeLogoA.value = '';
+        f.elements.youtubeLogoB.value = '';
+        pendingYtLogo.A = state.design.youtubeLogoA;
+        pendingYtLogo.B = state.design.youtubeLogoB;
+        updateYtLogoPreview('A');
+        updateYtLogoPreview('B');
         f.elements.bgImage.value = '';
         f.elements.bgFit.value = state.design.bgFit;
         f.elements.bgDim.value = state.design.bgDim;
@@ -3704,6 +3739,13 @@
         const has = Boolean(src);
         ui.teamLogoPreview[team].src = has ? src : '';
         ui.teamLogoPreview[team].classList.toggle('on', has);
+      }
+
+      function updateYtLogoPreview(team) {
+        const src = pendingYtLogo[team];
+        const has = Boolean(src);
+        ui.ytLogoPreview[team].src = has ? src : '';
+        ui.ytLogoPreview[team].classList.toggle('on', has);
       }
 
       function updateImagePreview(img, src) {
@@ -3920,6 +3962,25 @@
         });
       });
 
+      [['A', 'fYtLogoA', 'ytLogoAClear'], ['B', 'fYtLogoB', 'ytLogoBClear']].forEach(([team, inputId, clearId]) => {
+        const input = document.getElementById(inputId);
+        input.addEventListener('change', () => {
+          pickImage(input, {
+            maxSide: 640,
+            maxChars: 320000,
+            done: (src) => {
+              pendingYtLogo[team] = src;
+              updateYtLogoPreview(team);
+            }
+          });
+        });
+        document.getElementById(clearId).addEventListener('click', () => {
+          pendingYtLogo[team] = '';
+          input.value = '';
+          updateYtLogoPreview(team);
+        });
+      });
+
       document.getElementById('fBgImage').addEventListener('change', (e) => {
         const input = e.currentTarget;
         pickImage(input, {
@@ -4019,6 +4080,8 @@
         state.design.teamLogoA = pendingTeamLogo.A;
         state.design.teamLogoB = pendingTeamLogo.B;
         state.design.teamLogoHeight = clamp(Math.round(Number(f.elements.teamLogoHeight.value) || 56), 16, 160);
+        state.design.youtubeLogoA = pendingYtLogo.A;
+        state.design.youtubeLogoB = pendingYtLogo.B;
         state.design.bgImage = pendingBgImage;
         state.design.bgFit = ['cover', 'contain', 'stretch', 'repeat'].includes(f.elements.bgFit.value) ? f.elements.bgFit.value : 'cover';
         state.design.bgDim = clamp(Math.round(Number(f.elements.bgDim.value) || 0), 0, 90);
