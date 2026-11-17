@@ -346,6 +346,7 @@
 
     .el-team-logo {
       height: var(--team-logo-height, 64px);
+      max-height: 30vh;
       max-width: 20%;
       flex: 0 0 auto;
       object-fit: contain;
@@ -1863,6 +1864,11 @@
       box-shadow: none;
     }
 
+    body.style-youtube .el-team-logo {
+      height: var(--youtube-logo-height, var(--team-logo-height, 64px));
+      max-width: 45%;
+    }
+
     body.style-youtube .el-arena-name {
       text-shadow: none;
       font-weight: 700;
@@ -2055,7 +2061,8 @@
     }
 
     body.style-ytsets .el-team-logo {
-      height: calc(var(--team-logo-height, 64px) * 0.8);
+      height: var(--youtube-logo-height, calc(var(--team-logo-height, 64px) * 0.8));
+      max-width: 45%;
       margin-right: clamp(8px, 1vw, 18px);
     }
 
@@ -2545,7 +2552,7 @@
         </div>
         <div class="field">
           <label for="fTeamLogoHeight">Размер логотипов команд, px</label>
-          <input id="fTeamLogoHeight" name="teamLogoHeight" type="number" min="16" max="160" step="1">
+          <input id="fTeamLogoHeight" name="teamLogoHeight" type="number" min="16" max="320" step="1">
         </div>
         <div class="field full">
           <label>Логотипы команд только для YouTube (board4 / board5). Если не заданы — используются общие логотипы выше</label>
@@ -2567,6 +2574,10 @@
               </div>
             </div>
           </div>
+        </div>
+        <div class="field">
+          <label for="fYtLogoHeight">Размер логотипов для YouTube, px (до 320)</label>
+          <input id="fYtLogoHeight" name="youtubeLogoHeight" type="number" min="16" max="320" step="1">
         </div>
         <div class="field full">
           <label for="fBgImage">Фон табло (PNG / JPG / WEBP, до 12 МБ)</label>
@@ -2763,6 +2774,7 @@
           teamLogoHeight: 56,
           youtubeLogoA: '',
           youtubeLogoB: '',
+          youtubeLogoHeight: 56,
           bgImage: '',
           bgFit: 'cover',
           bgDim: 35,
@@ -2839,7 +2851,8 @@
         s.design.logoPos = s.design.logoPos === 'right' ? 'right' : 'left';
         s.design.teamLogoA = typeof s.design.teamLogoA === 'string' && s.design.teamLogoA.length <= 400000 ? s.design.teamLogoA : '';
         s.design.teamLogoB = typeof s.design.teamLogoB === 'string' && s.design.teamLogoB.length <= 400000 ? s.design.teamLogoB : '';
-        s.design.teamLogoHeight = clamp(Math.round(Number(s.design.teamLogoHeight) || 56), 16, 160);
+        s.design.teamLogoHeight = clamp(Math.round(Number(s.design.teamLogoHeight) || 56), 16, 320);
+        s.design.youtubeLogoHeight = clamp(Math.round(Number(s.design.youtubeLogoHeight) || s.design.teamLogoHeight), 16, 320);
         s.design.youtubeLogoA = typeof s.design.youtubeLogoA === 'string' && s.design.youtubeLogoA.length <= 400000 ? s.design.youtubeLogoA : '';
         s.design.youtubeLogoB = typeof s.design.youtubeLogoB === 'string' && s.design.youtubeLogoB.length <= 400000 ? s.design.youtubeLogoB : '';
         s.design.bgImage = safeImage(s.design.bgImage, 2400000);
@@ -3314,6 +3327,7 @@
         if (ui.liveBadge) ui.liveBadge.hidden = !(yt || sets);
         ui.body.style.setProperty('--logo-height', d.logoHeight + 'px');
         ui.body.style.setProperty('--team-logo-height', d.teamLogoHeight + 'px');
+        ui.body.style.setProperty('--youtube-logo-height', d.youtubeLogoHeight + 'px');
 
         const hasBg = Boolean(d.bgImage);
         ui.bgLayer.hidden = !hasBg;
@@ -3704,6 +3718,7 @@
         f.elements.youtubeLogoB.value = '';
         pendingYtLogo.A = state.design.youtubeLogoA;
         pendingYtLogo.B = state.design.youtubeLogoB;
+        f.elements.youtubeLogoHeight.value = state.design.youtubeLogoHeight;
         updateYtLogoPreview('A');
         updateYtLogoPreview('B');
         f.elements.bgImage.value = '';
@@ -4086,7 +4101,8 @@
         state.design.logo = pendingLogo;
         state.design.teamLogoA = pendingTeamLogo.A;
         state.design.teamLogoB = pendingTeamLogo.B;
-        state.design.teamLogoHeight = clamp(Math.round(Number(f.elements.teamLogoHeight.value) || 56), 16, 160);
+        state.design.teamLogoHeight = clamp(Math.round(Number(f.elements.teamLogoHeight.value) || 56), 16, 320);
+        state.design.youtubeLogoHeight = clamp(Math.round(Number(f.elements.youtubeLogoHeight.value) || 56), 16, 320);
         state.design.youtubeLogoA = pendingYtLogo.A;
         state.design.youtubeLogoB = pendingYtLogo.B;
         state.design.bgImage = pendingBgImage;
@@ -7241,9 +7257,9 @@ YouTube — сеты (как KeepTheScore)**. У этого табло **сво�
   у третьего табло (KeepTheScore), четвёртого (YouTube) и пятого (YouTube — сеты)
   цвета и шрифт свои — форма переключается на них автоматически при выборе варианта;
 - логотип: PNG / SVG / JPG, размер и положение слева или справа в шапке табло;
-- логотипы команд A и B: отдельные файлы и общий размер;
-  отдельно можно задать логотипы **только для YouTube** (`board4.html` / `board5.html`):
-  если они не загружены, YouTube-табло использует общие логотипы;
+- логотипы команд A и B: отдельные файлы и общий размер (до 320 px);
+  отдельно можно задать логотипы и размер **только для YouTube** (`board4.html` / `board5.html`, до 320 px):
+  если YouTube-логотипы не загружены, эти табло используют общие логотипы;
 - свой фон табло: PNG / JPG / WEBP, способ вписывания, затемнение и размытие;
 - свой фон команд A и B: отдельные картинки и общее затемнение;
 - авто-закрытие партии, звуки, показ тайм-аутов.
