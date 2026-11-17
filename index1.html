@@ -1,0 +1,629 @@
+Готов. Сделал максимально близко под шаблон **Arena** у KeepTheScore: та же сетка `grid-template-areas`, шрифт `Bebas Neue`, блоки `Sets Won`, история сыгранных партий снизу, текущая партия выделена, те же градиенты, тени и отступы.
+
+Сохрани как `index.html` и открой в браузере.
+
+```html
+<!doctype html>
+<html lang="ru">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Волейбол — Arena</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --arena-bg: #28ff05;
+      --title-bg: #1eff65;
+      --board-text: #ffffff;
+      --home-bg: #141fff;
+      --home-text: #f9ca24;
+      --away-bg: #202132;
+      --away-text: #ffffff;
+      --panel-bg: rgba(0, 0, 0, 0.35);
+      --panel-bg-current: rgba(0, 0, 0, 0.52);
+      --panel-inner-shadow: inset 0 0.14vh 0.28vh rgba(0, 0, 0, 0.45), inset 0 -0.08vh 0 rgba(255, 255, 255, 0.08);
+      --panel-top-glow: inset 0 0.12vh 0 rgba(255, 255, 255, 0.16);
+      --label-shadow: 0 0.1vh 0.5vh rgba(0, 0, 0, 0.4);
+      --digit-shadow: 0 0.16vh 1vh rgba(0, 0, 0, 0.6), 0 0 2.2vh rgba(255, 255, 255, 0.14);
+      --name-shadow: 0 0.24vh 0.8vh rgba(0, 0, 0, 0.5);
+      --radius: 0px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+      touch-action: manipulation;
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum", "tnum";
+      scrollbar-width: none;
+    }
+
+    *::-webkit-scrollbar {
+      display: none;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Bebas Neue", Roboto, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--board-text);
+      background: radial-gradient(1600px 1000px at 50% 0%, #2bff12 0%, #1f9f00 100%);
+      overflow: hidden;
+    }
+
+    button {
+      font: inherit;
+      color: inherit;
+      background: none;
+      border: 0;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    [contenteditable] {
+      outline: none;
+    }
+
+    .app {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      height: 100dvh;
+      gap: clamp(6px, 1vw, 12px);
+      padding: clamp(10px, 2vw, 24px);
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .topbar-title {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: clamp(6px, 0.9vw, 9px) clamp(22px, 7vw, 90px);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(0, 0, 0, 0.08) 100%);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 1.2vh 4vh rgba(0, 0, 0, 0.24);
+      background-color: var(--title-bg);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: clamp(14px, 1.8vw, 28px);
+      text-align: center;
+      white-space: nowrap;
+      text-shadow: var(--label-shadow);
+    }
+
+    main {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+    }
+
+    .arena-frame {
+      width: min(96vw, 1780px);
+      height: min(80dvh, 880px);
+      display: flex;
+    }
+
+    .arena {
+      position: relative;
+      flex: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) clamp(40px, 5vw, 78px) minmax(0, 1fr);
+      grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+      grid-template-areas:
+        "title title title"
+        "homeIdentity . awayIdentity"
+        "homeScore dash awayScore"
+        "homeCounters . awayCounters"
+        "sets sets sets";
+      gap: clamp(8px, 1.1vw, 16px);
+      padding: clamp(16px, 2.2vw, 34px);
+      border-radius: var(--radius);
+      background: rgb(40, 255, 5);
+    }
+
+    .box-title {
+      grid-area: title;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: clamp(6px, 0.9vw, 10px) clamp(16px, 4vw, 40px);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.26) 100%);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+      background-color: var(--title-bg);
+    }
+
+    .el-title {
+      font-size: clamp(16px, 2.4vw, 40px);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+      text-align: center;
+      text-shadow: var(--label-shadow);
+    }
+
+    .box-arena-identity {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .box-arena-identity-home {
+      grid-area: homeIdentity;
+      justify-content: flex-start;
+    }
+
+    .box-arena-identity-away {
+      grid-area: awayIdentity;
+      justify-content: flex-end;
+    }
+
+    .box-arena-name {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      padding: clamp(4px, 0.7vw, 9px) clamp(18px, 5vw, 56px);
+      border-radius: var(--radius);
+      box-shadow: var(--panel-top-glow), var(--panel-inner-shadow);
+    }
+
+    .box-arena-identity-home .box-arena-name {
+      background: var(--home-bg);
+      color: var(--home-text);
+    }
+
+    .box-arena-identity-away .box-arena-name {
+      background: var(--away-bg);
+      color: var(--away-text);
+    }
+
+    .el-arena-name {
+      font-weight: 900;
+      font-size: clamp(30px, 6.6vw, 100px);
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-shadow: var(--name-shadow);
+    }
+
+    .box-arena-score {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: clamp(8px, 1.2vw, 16px) clamp(32px, 7vw, 96px);
+      border-radius: var(--radius);
+      box-shadow: var(--panel-top-glow), var(--panel-inner-shadow);
+    }
+
+    .box-arena-score-home {
+      grid-area: homeScore;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 38%, rgba(0, 0, 0, 0) 62%, rgba(0, 0, 0, 0.24) 100%);
+      background-color: var(--home-bg);
+      color: var(--home-text);
+    }
+
+    .box-arena-score-away {
+      grid-area: awayScore;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 38%, rgba(0, 0, 0, 0) 62%, rgba(0, 0, 0, 0.24) 100%);
+      background-color: var(--away-bg);
+      color: var(--away-text);
+    }
+
+    .el-arena-score {
+      font-weight: 900;
+      font-size: clamp(100px, 16vw, 260px);
+      line-height: 0.82;
+      text-shadow: var(--digit-shadow);
+    }
+
+    .box-arena-dash {
+      grid-area: dash;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: clamp(80px, 12vw, 200px);
+      line-height: 0.8;
+      text-shadow: var(--digit-shadow);
+      padding: 0 clamp(10px, 2.6vw, 36px);
+    }
+
+    .box-arena-counters {
+      display: flex;
+      align-items: flex-start;
+      gap: clamp(10px, 1.6vw, 20px);
+    }
+
+    .box-arena-counters-home {
+      grid-area: homeCounters;
+      justify-content: flex-start;
+    }
+
+    .box-arena-counters-away {
+      grid-area: awayCounters;
+      justify-content: flex-end;
+    }
+
+    .box-arena-counter {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(4px, 0.6vw, 8px);
+      min-width: clamp(48px, 6.2vw, 82px);
+    }
+
+    .el-arena-counter-value {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: clamp(4px, 0.6vw, 8px) clamp(6px, 0.8vw, 12px);
+      border-radius: var(--radius);
+      background: var(--panel-bg);
+      font-weight: 900;
+      font-size: clamp(34px, 5.4vw, 74px);
+      line-height: 0.9;
+      box-shadow: var(--panel-top-glow), var(--panel-inner-shadow);
+      text-shadow: var(--digit-shadow);
+    }
+
+    .el-arena-counter-label {
+      text-align: center;
+      text-transform: uppercase;
+      font-weight: 600;
+      font-size: clamp(10px, 1vw, 18px);
+      line-height: 1.02;
+      letter-spacing: 0.12em;
+      text-shadow: var(--label-shadow);
+    }
+
+    .box-arena-sets {
+      grid-area: sets;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      gap: clamp(6px, 1vw, 14px);
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding: clamp(2px, 0.6vw, 6px) 0;
+    }
+
+    .box-arena-set {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(6px, 0.9vw, 12px);
+      flex: 0 0 auto;
+      min-width: clamp(96px, 11vw, 164px);
+      padding: clamp(6px, 0.9vw, 10px) clamp(16px, 2.6vw, 32px);
+      border-radius: var(--radius);
+      background: var(--panel-bg);
+      font-size: clamp(26px, 4vw, 54px);
+      font-weight: 600;
+      box-shadow: var(--panel-top-glow), var(--panel-inner-shadow);
+    }
+
+    .box-arena-set.current {
+      background: var(--panel-bg-current);
+    }
+
+    .box-arena-set.unplayed {
+      opacity: 0.38;
+    }
+
+    .box-arena-set:not(.current):not(.unplayed) .el-arena-set-score,
+    .box-arena-set:not(.current):not(.unplayed) .el-arena-set-sep {
+      opacity: 0.72;
+    }
+
+    .el-arena-set-score.winner {
+      font-weight: 900;
+    }
+
+    .el-arena-set-sep {
+      opacity: 0.6;
+    }
+
+    footer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(6px, 1.2vw, 14px);
+      flex-wrap: wrap;
+    }
+
+    .footer-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: clamp(6px, 0.8vw, 10px) clamp(14px, 2.2vw, 26px);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(0, 0, 0, 0.24) 100%);
+      text-transform: uppercase;
+      letter-spacing: 0.26em;
+      font-size: clamp(9px, 0.8vw, 12px);
+      text-shadow: var(--label-shadow);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    }
+
+    .footer-btn:hover {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(0, 0, 0, 0.3) 100%);
+    }
+
+    .footer-btn:active {
+      transform: translateY(1px);
+    }
+
+    @media (max-width: 1180px) {
+      .arena {
+        grid-template-areas:
+          "title title title"
+          "homeIdentity awayIdentity awayIdentity"
+          "homeScore dash awayScore"
+          "homeCounters homeCounters awayCounters"
+          "sets sets sets";
+      }
+
+      .box-arena-identity-away {
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 920px) {
+      .arena-frame {
+        height: min(84dvh, 920px);
+      }
+
+      .el-arena-name {
+        font-size: clamp(24px, 10vw, 64px);
+      }
+
+      .el-arena-score {
+        font-size: clamp(78px, 20vw, 168px);
+      }
+    }
+
+    @media (max-height: 720px) {
+      .arena {
+        padding: clamp(12px, 1.8vw, 22px);
+        gap: clamp(6px, 1vw, 12px);
+      }
+
+      .box-arena-score {
+        padding-top: clamp(4px, 0.8vw, 10px);
+        padding-bottom: clamp(4px, 0.8vw, 10px);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header>
+      <div class="topbar-title" contenteditable spellcheck="false" id="tournamentTitle">КЫРГЫЗСТАН - MADE WITH KEEPTHESCORE.COM</div>
+    </header>
+    <main>
+      <div class="arena-frame">
+        <div class="arena">
+          <div class="box-title">
+            <div class="el-title" contenteditable spellcheck="false" id="matchTitle">ВОЛЕЙБОЛ</div>
+          </div>
+          <div class="box-arena-identity box-arena-identity-home">
+            <div class="box-arena-name">
+              <div class="el-arena-name" contenteditable spellcheck="false" id="nameA">КАРА-КУЛЖА</div>
+            </div>
+          </div>
+          <div class="box-arena-identity box-arena-identity-away">
+            <div class="box-arena-name">
+              <div class="el-arena-name" contenteditable spellcheck="false" id="nameB">НООКАТ</div>
+            </div>
+          </div>
+          <div class="box-arena-score box-arena-score-home">
+            <div class="el-arena-score" id="scoreA">0</div>
+          </div>
+          <div class="box-arena-dash">-</div>
+          <div class="box-arena-score box-arena-score-away">
+            <div class="el-arena-score" id="scoreB">0</div>
+          </div>
+          <div class="box-arena-counters box-arena-counters-home">
+            <div class="box-arena-counter">
+              <div class="el-arena-counter-value" id="setsWonA">0</div>
+              <div class="el-arena-counter-label">Sets<br>Won</div>
+            </div>
+          </div>
+          <div class="box-arena-counters box-arena-counters-away">
+            <div class="box-arena-counter">
+              <div class="el-arena-counter-value" id="setsWonB">0</div>
+              <div class="el-arena-counter-label">Sets<br>Won</div>
+            </div>
+          </div>
+          <div class="box-arena-sets" id="setsRow"></div>
+        </div>
+      </div>
+    </main>
+    <footer>
+      <button class="footer-btn" id="minusA">-1 ЛЕВАЯ</button>
+      <button class="footer-btn" id="plusA">+1 ЛЕВАЯ</button>
+      <button class="footer-btn" id="minusB">-1 ПРАВАЯ</button>
+      <button class="footer-btn" id="plusB">+1 ПРАВАЯ</button>
+      <button class="footer-btn" id="endSet">ЗАВЕРШИТЬ ПАРТИЮ</button>
+      <button class="footer-btn" id="undo">ОТМЕНИТЬ</button>
+      <button class="footer-btn" id="newMatch">НОВЫЙ МАТЧ</button>
+      <button class="footer-btn" id="fs">ПОЛНЫЙ ЭКРАН</button>
+    </footer>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'kts-arena-volley-v1';
+    const state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+
+    const def = {
+      nameA: 'КАРА-КУЛЖА',
+      nameB: 'НООКАТ',
+      tournamentTitle: 'КЫРГЫЗСТАН - MADE WITH KEEPTHESCORE.COM',
+      matchTitle: 'ВОЛЕЙБОЛ',
+      scoreA: 0,
+      scoreB: 0,
+      setsWonA: 0,
+      setsWonB: 0,
+      sets: [],
+      log: []
+    };
+
+    Object.assign(def, state);
+    if (!Array.isArray(def.sets)) def.sets = [];
+    if (!Array.isArray(def.log)) def.log = [];
+
+    const $ = (s) => document.querySelector(s);
+
+    const nameAE = $('#nameA');
+    const nameBE = $('#nameB');
+    const tourT = $('#tournamentTitle');
+    const matchT = $('#matchTitle');
+    const scoreAE = $('#scoreA');
+    const scoreBE = $('#scoreB');
+    const setsWonAE = $('#setsWonA');
+    const setsWonBE = $('#setsWonB');
+    const setsRow = $('#setsRow');
+
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(def));
+    }
+
+    function pushLog() {
+      def.log.push(JSON.stringify({
+        nameA: def.nameA,
+        nameB: def.nameB,
+        tournamentTitle: def.tournamentTitle,
+        matchTitle: def.matchTitle,
+        scoreA: def.scoreA,
+        scoreB: def.scoreB,
+        setsWonA: def.setsWonA,
+        setsWonB: def.setsWonB,
+        sets: def.sets.slice()
+      }));
+      if (def.log.length > 80) def.log.shift();
+    }
+
+    function render() {
+      nameAE.textContent = def.nameA;
+      nameBE.textContent = def.nameB;
+      tourT.textContent = def.tournamentTitle;
+      matchT.textContent = def.matchTitle;
+      scoreAE.textContent = def.scoreA;
+      scoreBE.textContent = def.scoreB;
+      setsWonAE.textContent = def.setsWonA;
+      setsWonBE.textContent = def.setsWonB;
+
+      setsRow.innerHTML = '';
+      def.sets.forEach((s, idx) => {
+        const el = document.createElement('div');
+        const isCurrent = idx === def.sets.length - 1;
+        el.className = 'box-arena-set' + (isCurrent ? ' current' : '');
+        const aWin = s.a > s.b ? 'winner' : '';
+        const bWin = s.b > s.a ? 'winner' : '';
+        el.innerHTML = '<span class="el-arena-set-score ' + aWin + '">' + s.a + '</span><span class="el-arena-set-sep">-</span><span class="el-arena-set-score ' + bWin + '">' + s.b + '</span>';
+        setsRow.appendChild(el);
+      });
+      const empty = document.createElement('div');
+      empty.className = 'box-arena-set unplayed';
+      empty.innerHTML = '<span class="el-arena-set-empty">-</span>';
+      setsRow.appendChild(empty);
+
+      save();
+    }
+
+    nameAE.addEventListener('input', () => { def.nameA = nameAE.textContent.trim().toUpperCase() || 'КОМАНДА А'; save(); });
+    nameBE.addEventListener('input', () => { def.nameB = nameBE.textContent.trim().toUpperCase() || 'КОМАНДА Б'; save(); });
+    tourT.addEventListener('input', () => { def.tournamentTitle = tourT.textContent.trim() || 'КЫРГЫЗСТАН - MADE WITH KEEPTHESCORE.COM'; save(); });
+    matchT.addEventListener('input', () => { def.matchTitle = matchT.textContent.trim().toUpperCase() || 'ВОЛЕЙБОЛ'; save(); });
+
+    $('#plusA').addEventListener('click', () => { pushLog(); def.scoreA++; render(); });
+    $('#minusA').addEventListener('click', () => { pushLog(); if (def.scoreA > 0) def.scoreA--; render(); });
+    $('#plusB').addEventListener('click', () => { pushLog(); def.scoreB++; render(); });
+    $('#minusB').addEventListener('click', () => { pushLog(); if (def.scoreB > 0) def.scoreB--; render(); });
+
+    $('#endSet').addEventListener('click', () => {
+      if (def.scoreA === 0 && def.scoreB === 0 && def.sets.length > 0) return;
+      pushLog();
+      def.sets.push({ a: def.scoreA, b: def.scoreB });
+      if (def.scoreA > def.scoreB) def.setsWonA++;
+      if (def.scoreB > def.scoreA) def.setsWonB++;
+      def.scoreA = 0;
+      def.scoreB = 0;
+      render();
+    });
+
+    $('#undo').addEventListener('click', () => {
+      if (!def.log.length) return;
+      const last = JSON.parse(def.log.pop());
+      def.nameA = last.nameA;
+      def.nameB = last.nameB;
+      def.tournamentTitle = last.tournamentTitle;
+      def.matchTitle = last.matchTitle;
+      def.scoreA = last.scoreA;
+      def.scoreB = last.scoreB;
+      def.setsWonA = last.setsWonA;
+      def.setsWonB = last.setsWonB;
+      def.sets = Array.isArray(last.sets) ? last.sets.slice() : [];
+      nameAE.textContent = def.nameA;
+      nameBE.textContent = def.nameB;
+      tourT.textContent = def.tournamentTitle;
+      matchT.textContent = def.matchTitle;
+      render();
+    });
+
+    $('#newMatch').addEventListener('click', () => {
+      if (!confirm('Начать новый матч? Текущий счёт будет сброшен.')) return;
+      pushLog();
+      def.scoreA = 0;
+      def.scoreB = 0;
+      def.setsWonA = 0;
+      def.setsWonB = 0;
+      def.sets = [];
+      render();
+    });
+
+    $('#fs').addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => { });
+      } else {
+        document.exitFullscreen().catch(() => { });
+      }
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (document.activeElement && document.activeElement.isContentEditable) return;
+      const k = e.key.toLowerCase();
+      if (k === 'a') { pushLog(); def.scoreA++; render(); }
+      if (k === 'z') { pushLog(); if (def.scoreA > 0) def.scoreA--; render(); }
+      if (k === 'k') { pushLog(); def.scoreB++; render(); }
+      if (k === 'm') { pushLog(); if (def.scoreB > 0) def.scoreB--; render(); }
+      if (k === 's') { e.preventDefault(); $('#endSet').click(); }
+      if (k === 'u') { e.preventDefault(); $('#undo').click(); }
+      if (k === 'r') { e.preventDefault(); $('#newMatch').click(); }
+      if (k === 'f') { e.preventDefault(); $('#fs').click(); }
+    });
+
+    render();
+  </script>
+</body>
+
+</html>
+```

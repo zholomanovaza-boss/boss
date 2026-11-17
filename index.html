@@ -1,0 +1,4097 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Волейбол — Arena</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Montserrat:wght@400;600;800&family=Oswald:wght@400;600;700&family=Roboto+Condensed:wght@400;700&family=Russo+One&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-family: "Bebas Neue", "Oswald", Roboto, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      --bg: #28ff05;
+      --title-bg: #1eff65;
+      --text: #ffffff;
+      --home-bg: #141fff;
+      --home-fg: #f9ca24;
+      --away-bg: #202132;
+      --away-fg: #ffffff;
+      --panel: rgba(0, 0, 0, 0.35);
+      --panel-current: rgba(0, 0, 0, 0.52);
+      --chrome: rgba(0, 0, 0, 0.28);
+      --chrome-border: rgba(255, 255, 255, 0.14);
+      --radius: 0px;
+      --label-shadow: 0 0.1vh 0.5vh rgba(0, 0, 0, 0.4);
+      --digit-shadow: 0 0.16vh 1vh rgba(0, 0, 0, 0.6), 0 0 2.2vh rgba(255, 255, 255, 0.14);
+      --name-shadow: 0 0.24vh 0.8vh rgba(0, 0, 0, 0.5);
+      --inner-shadow: inset 0 0.14vh 0.28vh rgba(0, 0, 0, 0.45), inset 0 -0.08vh 0 rgba(255, 255, 255, 0.08);
+      --top-glow: inset 0 0.12vh 0 rgba(255, 255, 255, 0.16);
+    }
+
+    body[data-theme="dark"] {
+      --bg: radial-gradient(1600px 1000px at 50% 0%, #182036 0%, #060a14 100%);
+      --title-bg: #1b2540;
+      --text: #ffffff;
+      --home-bg: #1d4ed8;
+      --home-fg: #ffffff;
+      --away-bg: #232a3d;
+      --away-fg: #ffffff;
+      --panel: rgba(0, 0, 0, 0.42);
+      --panel-current: rgba(0, 0, 0, 0.6);
+    }
+
+    body[data-theme="blue"] {
+      --bg: radial-gradient(1600px 1000px at 50% 0%, #0f2b57 0%, #071224 100%);
+      --title-bg: #173d73;
+      --text: #ffffff;
+      --home-bg: #2563eb;
+      --home-fg: #ffffff;
+      --away-bg: #0e1b30;
+      --away-fg: #7dd3fc;
+      --panel: rgba(0, 0, 0, 0.45);
+      --panel-current: rgba(0, 0, 0, 0.62);
+    }
+
+    body[data-theme="kts"] {
+      --bg: radial-gradient(1600px 1000px at 50% 0%, #16315e 0%, #081426 100%);
+      --title-bg: #1b3a6b;
+      --text: #ffffff;
+      --home-bg: #1f4173;
+      --home-fg: #ffffff;
+      --away-bg: #182f57;
+      --away-fg: #cfe3ff;
+      --panel: rgba(255, 255, 255, 0.09);
+      --panel-current: rgba(255, 255, 255, 0.17);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+      touch-action: manipulation;
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum", "tnum";
+      scrollbar-width: none;
+    }
+
+    *::-webkit-scrollbar {
+      display: none;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font-family);
+      color: var(--text);
+      background: var(--bg);
+      overflow: hidden;
+    }
+
+    body.transparent {
+      background: transparent !important;
+    }
+
+    body.transparent .arena {
+      background: transparent;
+      box-shadow: none;
+    }
+
+    body.transparent .bg-layer,
+    body.transparent .bg-shade,
+    body.transparent .topbar {
+      display: none !important;
+    }
+
+    /* ---------- Фон табло ---------- */
+    .bg-layer,
+    .bg-shade {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .bg-layer {
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+      transform: scale(1.04);
+    }
+
+    .bg-layer[hidden],
+    .bg-shade[hidden] {
+      display: none;
+    }
+
+    .bg-shade {
+      background: #000;
+    }
+
+    button {
+      font: inherit;
+      color: inherit;
+      background: none;
+      border: 0;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    [contenteditable] {
+      outline: none;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      height: 100dvh;
+      gap: clamp(6px, 1vw, 12px);
+      padding: clamp(10px, 1.8vw, 22px);
+    }
+
+    /* ---------- Шапка ---------- */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: clamp(8px, 1.4vw, 16px);
+      min-height: clamp(34px, 4vw, 54px);
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .sync-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: var(--chrome);
+      border: 1px solid var(--chrome-border);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: clamp(8px, 0.72vw, 11px);
+      white-space: nowrap;
+    }
+
+    .sync-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #ffb63b;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    .sync-pill.online .sync-dot {
+      background: #38e07b;
+    }
+
+    .sync-pill.offline .sync-dot {
+      background: #ff5a6a;
+    }
+
+    .icon-btn {
+      width: clamp(32px, 3.2vw, 42px);
+      height: clamp(32px, 3.2vw, 42px);
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      border: 1px solid var(--chrome-border);
+      background: var(--chrome);
+      font-size: clamp(12px, 1.2vw, 16px);
+      transition: background 0.15s, opacity 0.15s;
+    }
+
+    .icon-btn:hover {
+      background: rgba(0, 0, 0, 0.42);
+    }
+
+    /* ---------- Арена ---------- */
+    main {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+    }
+
+    .arena-frame {
+      width: min(96vw, 1780px);
+      height: min(80dvh, 880px);
+      display: flex;
+    }
+
+    body.display .arena-frame {
+      height: 100dvh;
+      width: 100vw;
+    }
+
+    body.display .app {
+      grid-template-rows: minmax(0, 1fr);
+      gap: 0;
+      padding: 0;
+    }
+
+    .arena {
+      --name-font: clamp(26px, 5.2vw, 92px);
+      --score-font: clamp(96px, 15.5vw, 250px);
+      --title-font: clamp(16px, 2.4vw, 40px);
+      --set-font: clamp(24px, 3.8vw, 52px);
+      --counter-font: clamp(30px, 5vw, 68px);
+      --counter-timeout-font: clamp(24px, 3.8vw, 52px);
+      --counter-label-font: clamp(9px, 0.95vw, 16px);
+      --mid-fit: 1;
+      --mid-row-gap: calc(clamp(3px, 0.5vw, 8px) * var(--panel-scale, 1) * var(--mid-fit, 1));
+      --mid-row-pad-y: calc(clamp(2px, 0.35vw, 6px) * var(--panel-scale, 1) * var(--mid-fit, 1));
+      --mid-row-pad-x: calc(clamp(6px, 0.8vw, 14px) * var(--panel-scale, 1) * var(--mid-fit, 1));
+      --mid-row-radius: clamp(5px, 0.7vw, 12px);
+      position: relative;
+      flex: 1;
+      display: grid;
+      font-family: var(--font-family);
+      grid-template-columns: minmax(0, 1fr) clamp(210px, 24vw, 380px) minmax(0, 1fr);
+      grid-template-rows: auto auto minmax(0, 1fr);
+      grid-template-areas:
+        "title title title"
+        "homeIdentity heading awayIdentity"
+        "homeScore mid awayScore";
+      gap: clamp(8px, 1.1vw, 16px);
+      padding: clamp(14px, 2.2vw, 34px);
+      border-radius: var(--radius);
+      background: transparent;
+    }
+
+    .box-title {
+      grid-area: title;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: calc(clamp(6px, 0.9vw, 10px) * var(--panel-scale, 1)) calc(clamp(16px, 4vw, 40px) * var(--panel-scale, 1));
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.26) 100%);
+      background-color: var(--title-bg);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    }
+
+    .el-title {
+      font-size: calc(var(--title-font) * var(--title-scale, 1));
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+      text-align: center;
+      text-shadow: var(--label-shadow);
+    }
+
+    .el-logo {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      height: var(--logo-height, 64px);
+      max-width: 22%;
+      object-fit: contain;
+      filter: drop-shadow(0 0.4vh 1.2vh rgba(0, 0, 0, 0.45));
+      pointer-events: none;
+    }
+
+    .el-logo.pos-left {
+      left: clamp(10px, 1.6vw, 24px);
+    }
+
+    .el-logo.pos-right {
+      right: clamp(10px, 1.6vw, 24px);
+    }
+
+    .el-logo[hidden] {
+      display: none;
+    }
+
+    .box-title.has-logo.pos-left {
+      padding-left: calc(var(--logo-height, 64px) + clamp(20px, 3.4vw, 44px));
+    }
+
+    .box-title.has-logo.pos-right {
+      padding-right: calc(var(--logo-height, 64px) + clamp(20px, 3.4vw, 44px));
+    }
+
+    .box-title.has-logo.pos-right .set-meta {
+      right: calc(var(--logo-height, 64px) + clamp(20px, 3.4vw, 44px));
+    }
+
+    .el-team-logo {
+      height: var(--team-logo-height, 64px);
+      max-width: 20%;
+      flex: 0 0 auto;
+      object-fit: contain;
+      filter: drop-shadow(0 0.3vh 0.9vh rgba(0, 0, 0, 0.45));
+    }
+
+    .el-team-logo[hidden] {
+      display: none;
+    }
+
+    .set-meta {
+      position: absolute;
+      right: clamp(10px, 2vw, 24px);
+      top: 50%;
+      transform: translateY(-50%);
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      font-size: clamp(9px, 1vw, 15px);
+      opacity: 0.85;
+      white-space: nowrap;
+      text-shadow: var(--label-shadow);
+    }
+
+    .winner-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 2px 12px;
+      background: rgba(0, 0, 0, 0.32);
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: clamp(10px, 1.2vw, 18px);
+      white-space: nowrap;
+    }
+
+    .winner-badge[hidden] {
+      display: none;
+    }
+
+    .box-arena-identity {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .box-arena-identity-home {
+      grid-area: homeIdentity;
+      justify-content: flex-start;
+    }
+
+    .box-arena-identity-away {
+      grid-area: awayIdentity;
+      justify-content: flex-end;
+    }
+
+    .box-arena-name {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(6px, 1vw, 14px);
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      padding: calc(clamp(4px, 0.7vw, 9px) * var(--panel-scale, 1)) calc(clamp(10px, 1.6vw, 26px) * var(--panel-scale, 1));
+      box-shadow: var(--top-glow), var(--inner-shadow);
+    }
+
+    .box-arena-identity-home .box-arena-name {
+      background-color: var(--home-bg);
+      background-image:
+        linear-gradient(rgba(0, 0, 0, var(--home-image-dim, 0)), rgba(0, 0, 0, var(--home-image-dim, 0))),
+        var(--home-image, none);
+      background-size: auto, cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      color: var(--home-fg);
+    }
+
+    .box-arena-identity-away .box-arena-name {
+      background-color: var(--away-bg);
+      background-image:
+        linear-gradient(rgba(0, 0, 0, var(--away-image-dim, 0)), rgba(0, 0, 0, var(--away-image-dim, 0))),
+        var(--away-image, none);
+      background-size: auto, cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      color: var(--away-fg);
+    }
+
+    .el-serve {
+      display: block;
+      width: clamp(20px, 2.6vw, 38px);
+      height: clamp(20px, 2.6vw, 38px);
+      flex: 0 0 auto;
+      opacity: 0;
+      transform: scale(0.7);
+      transition: opacity 0.2s, transform 0.2s, filter 0.2s;
+      cursor: pointer;
+    }
+
+    .el-serve.on {
+      opacity: 1;
+      transform: scale(1);
+      filter: drop-shadow(0 0 6px currentColor);
+    }
+
+    .el-serve svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Симметричный отступ справа: имя команды остаётся по центру плашки,
+       даже когда иконка подачи слева скрыта. */
+    .box-arena-name::after {
+      content: '';
+      flex: 0 0 auto;
+      width: clamp(20px, 2.6vw, 38px);
+    }
+
+    .el-arena-name {
+      font-weight: 900;
+      font-size: calc(var(--name-font) * var(--name-scale, 1) * var(--name-fit, 1));
+      line-height: 1;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-shadow: var(--name-shadow);
+    }
+
+    .box-arena-score {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: calc(clamp(8px, 1.2vw, 16px) * var(--panel-scale, 1)) calc(clamp(26px, 6vw, 84px) * var(--panel-scale, 1));
+      box-shadow: var(--top-glow), var(--inner-shadow);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .box-arena-score-home {
+      grid-area: homeScore;
+      background-image:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 38%, rgba(0, 0, 0, 0) 62%, rgba(0, 0, 0, 0.24) 100%),
+        linear-gradient(rgba(0, 0, 0, var(--home-image-dim, 0)), rgba(0, 0, 0, var(--home-image-dim, 0))),
+        var(--home-image, none);
+      background-size: auto, auto, cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-color: var(--home-bg);
+      color: var(--home-fg);
+    }
+
+    .box-arena-score-away {
+      grid-area: awayScore;
+      background-image:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 38%, rgba(0, 0, 0, 0) 62%, rgba(0, 0, 0, 0.24) 100%),
+        linear-gradient(rgba(0, 0, 0, var(--away-image-dim, 0)), rgba(0, 0, 0, var(--away-image-dim, 0))),
+        var(--away-image, none);
+      background-size: auto, auto, cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-color: var(--away-bg);
+      color: var(--away-fg);
+    }
+
+    .el-arena-score {
+      font-weight: 900;
+      font-size: calc(var(--score-font) * var(--score-scale, 1) * var(--score-fit, 1));
+      line-height: 0.82;
+      text-shadow: var(--digit-shadow);
+    }
+
+    .el-arena-score.bump {
+      animation: bump 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+    }
+
+    @keyframes bump {
+      0% { transform: scale(1); }
+      35% { transform: scale(1.09); }
+      100% { transform: scale(1); }
+    }
+
+    .box-arena-center {
+      display: contents;
+    }
+
+    /* Вариант второго табло (?stats=block): обе статистики — строками в блоке. */
+    body.stats-block .mid-pair {
+      flex-direction: row;
+      align-items: baseline;
+      justify-content: center;
+      gap: clamp(5px, 0.65vw, 11px);
+    }
+
+    .box-arena-heading {
+      grid-area: heading;
+      align-self: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .box-arena-heading .mid-pair {
+      width: 100%;
+    }
+
+    .box-arena-mid {
+      grid-area: mid;
+      align-self: start;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: center;
+      gap: var(--mid-row-gap);
+      width: 100%;
+      min-width: 0;
+      max-height: 100%;
+      overflow: hidden;
+      padding: calc(clamp(4px, 0.55vw, 9px) * var(--panel-scale, 1) * var(--mid-fit, 1)) 0;
+      border-radius: clamp(8px, 1.2vw, 16px);
+      background: var(--panel);
+      box-shadow: var(--top-glow), var(--inner-shadow);
+    }
+
+    .mid-stats {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: center;
+      gap: var(--mid-row-gap);
+      width: 100%;
+      min-width: 0;
+    }
+
+    .mid-pair {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(0px, 0.15vw, 3px);
+      width: 100%;
+      min-width: 0;
+      padding: calc(var(--mid-row-pad-y) * var(--panel-scale, 1)) calc(var(--mid-row-pad-x) * var(--panel-scale, 1));
+      text-align: center;
+      background: var(--panel);
+      border-radius: var(--mid-row-radius);
+      box-shadow: var(--top-glow), var(--inner-shadow);
+    }
+
+    .mid-label {
+      font-size: calc(clamp(12px, 1.1vw, 20px) * var(--mid-scale, 1) * var(--mid-fit, 1));
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      opacity: 0.75;
+      text-shadow: var(--label-shadow);
+    }
+
+    .mid-value {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 1px;
+      margin-left: 0;
+      font-weight: 900;
+      font-size: calc(clamp(30px, 3.4vw, 58px) * var(--mid-scale, 1) * var(--mid-fit, 1));
+      line-height: 1;
+      white-space: nowrap;
+      text-shadow: var(--digit-shadow);
+    }
+
+    .mid-sep {
+      opacity: 0.5;
+      margin: 0 0.1em;
+    }
+
+    .mid-to {
+      padding: 0 0.08em;
+      cursor: pointer;
+    }
+
+    .mid-to:hover {
+      background: rgba(0, 0, 0, 0.35);
+    }
+
+    .box-arena-mid.hide-timeouts .mid-timeouts {
+      display: none;
+    }
+
+    .box-arena-mid .box-arena-sets {
+      flex: 0 0 auto;
+      width: 100%;
+      flex-direction: column;
+      justify-content: center;
+      gap: var(--mid-row-gap);
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .box-arena-mid .box-arena-set {
+      flex: 0 0 auto;
+      width: 100%;
+      min-width: 0;
+      padding: calc(var(--mid-row-pad-y) * var(--panel-scale, 1)) calc(var(--mid-row-pad-x) * var(--panel-scale, 1));
+      gap: clamp(3px, 0.4vw, 7px);
+      font-size: calc(clamp(16px, 1.65vw, 28px) * var(--set-scale, 1) * var(--mid-fit, 1));
+      border-radius: var(--mid-row-radius);
+    }
+
+    .box-arena-mid .box-arena-set.current {
+      background: var(--panel);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.32), var(--top-glow), var(--inner-shadow);
+    }
+
+    .box-arena-counters {
+      display: flex;
+      align-items: flex-start;
+      gap: clamp(8px, 1.4vw, 18px);
+    }
+
+    .box-arena-counters-home {
+      justify-content: flex-start;
+    }
+
+    .box-arena-counters-away {
+      justify-content: flex-end;
+    }
+
+    .box-arena-counters.hide-timeouts .counter-timeouts {
+      display: none;
+    }
+
+    .box-arena-counter {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(3px, 0.5vw, 7px);
+      min-width: clamp(46px, 6vw, 80px);
+    }
+
+    .el-arena-counter-value {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: clamp(34px, 4.4vw, 56px);
+      padding: clamp(3px, 0.5vw, 7px) clamp(6px, 0.8vw, 12px);
+      background: var(--panel);
+      font-weight: 900;
+      font-size: var(--counter-font);
+      line-height: 0.9;
+      box-shadow: var(--top-glow), var(--inner-shadow);
+      text-shadow: var(--digit-shadow);
+    }
+
+    .counter-timeouts .el-arena-counter-value {
+      font-size: var(--counter-timeout-font);
+      cursor: pointer;
+    }
+
+    .counter-timeouts .el-arena-counter-value:hover {
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    .el-arena-counter-label {
+      text-align: center;
+      text-transform: uppercase;
+      font-weight: 600;
+      font-size: var(--counter-label-font);
+      line-height: 1.02;
+      letter-spacing: 0.12em;
+      text-shadow: var(--label-shadow);
+      white-space: nowrap;
+    }
+
+    .box-arena-sets {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      gap: clamp(6px, 1vw, 14px);
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding: clamp(2px, 0.6vw, 6px) 0;
+    }
+
+    .box-arena-set {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(6px, 0.9vw, 12px);
+      flex: 0 0 auto;
+      min-width: clamp(88px, 10.5vw, 158px);
+      padding: clamp(5px, 0.8vw, 10px) clamp(14px, 2.4vw, 30px);
+      background: var(--panel);
+      font-size: calc(var(--set-font) * var(--set-scale, 1));
+      font-weight: 600;
+      box-shadow: var(--top-glow), var(--inner-shadow);
+    }
+
+    .box-arena-set.current {
+      background: var(--panel-current);
+    }
+
+    .box-arena-set.unplayed {
+      opacity: 1;
+    }
+
+    .box-arena-set.unplayed .el-arena-set-score,
+    .box-arena-set.unplayed .el-arena-set-sep,
+    .box-arena-set.unplayed .el-arena-set-empty {
+      opacity: 0.4;
+    }
+
+    .box-arena-set:not(.current):not(.unplayed) .el-arena-set-score,
+    .box-arena-set:not(.current):not(.unplayed) .el-arena-set-sep {
+      opacity: 0.72;
+    }
+
+    .el-arena-set-score.winner {
+      font-weight: 900;
+    }
+
+    .el-arena-set-sep {
+      opacity: 0.6;
+    }
+
+    /* ---------- Нижняя панель управления ---------- */
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(5px, 0.8vw, 10px);
+      flex-wrap: wrap;
+      padding-top: 2px;
+    }
+
+    body.display .controls,
+    body.display .topbar {
+      display: none;
+    }
+
+    .ctrl {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: clamp(5px, 0.7vw, 9px) clamp(10px, 1.5vw, 18px);
+      background: var(--chrome);
+      border: 1px solid var(--chrome-border);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: clamp(8px, 0.75vw, 12px);
+      white-space: nowrap;
+      text-shadow: var(--label-shadow);
+      transition: background 0.15s, opacity 0.15s;
+    }
+
+    .ctrl:hover {
+      background: rgba(0, 0, 0, 0.42);
+    }
+
+    .ctrl:active {
+      transform: translateY(1px);
+    }
+
+    .ctrl.accent {
+      background: rgba(0, 0, 0, 0.46);
+    }
+
+    .ctrl:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+
+    .ctrl-sep {
+      width: 1px;
+      height: 22px;
+      background: rgba(255, 255, 255, 0.18);
+      margin: 0 2px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 96px;
+      transform: translate(-50%, 14px);
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: rgba(8, 12, 22, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 100;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    /* ---------- Настройки ---------- */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(4, 7, 15, 0.74);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+    }
+
+    .overlay[hidden] {
+      display: none;
+    }
+
+    .modal {
+      width: min(720px, 100%);
+      max-height: 92dvh;
+      overflow: auto;
+      padding: clamp(18px, 3vw, 32px);
+      background: #151b2b;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 30px 100px -20px rgba(0, 0, 0, 0.9);
+      color: #eef3ff;
+      font-family: "Segoe UI", system-ui, sans-serif;
+    }
+
+    .modal h2 {
+      margin: 0 0 16px;
+      font-size: 22px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 14px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field > label {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #8ea0c4;
+    }
+
+    .field input[type="text"],
+    .field input[type="number"],
+    .field select {
+      width: 100%;
+      padding: 9px 11px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #eef3ff;
+      font: inherit;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: rgba(255, 255, 255, 0.38);
+    }
+
+    .field select option {
+      background: #151b2b;
+    }
+
+    .font-preview {
+      margin-top: 8px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.07);
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #eef3ff;
+    }
+
+    .checks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 20px;
+      grid-column: 1 / -1;
+      padding: 4px 0;
+    }
+
+    .check {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #dfe7fb;
+      cursor: pointer;
+    }
+
+    .check input {
+      width: 16px;
+      height: 16px;
+      accent-color: #ffb63b;
+    }
+
+    .field > label.check {
+      flex-direction: row;
+      margin-top: 2px;
+      font-size: 13px;
+      letter-spacing: 0;
+      text-transform: none;
+      color: #dfe7fb;
+    }
+
+    .modal-note {
+      grid-column: 1 / -1;
+      margin: 4px 0 0;
+      font-size: 11px;
+      line-height: 1.55;
+      color: #8492b4;
+      font-family: inherit;
+    }
+
+    .modal-note code {
+      color: #cfe0ff;
+      background: rgba(255, 255, 255, 0.07);
+      padding: 1px 5px;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.06);
+      color: #eef3ff;
+      font: inherit;
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .btn.primary {
+      background: #ffb63b;
+      border-color: #ffb63b;
+      color: #16110a;
+      font-weight: 700;
+    }
+
+    .btn.small {
+      padding: 6px 12px;
+      font-size: 11px;
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+      gap: 8px;
+    }
+
+    .color-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #8ea0c4;
+    }
+
+    .color-item input[type="color"] {
+      width: 100%;
+      height: 34px;
+      padding: 2px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      cursor: pointer;
+    }
+
+    .scale-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 14px;
+    }
+
+    .scale-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 7px 10px;
+      padding: 8px 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .scale-item > span {
+      font-size: 10px;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: #8ea0c4;
+    }
+
+    .scale-item output {
+      font-size: 12px;
+      font-weight: 700;
+      color: #ffd28a;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .scale-item input[type="range"] {
+      grid-column: 1 / -1;
+      width: 100%;
+      margin: 0;
+      accent-color: #ffb63b;
+      cursor: pointer;
+    }
+
+    .scale-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 7px;
+    }
+
+    .scale-head > label {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #8ea0c4;
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .logo-row input[type="file"] {
+      max-width: 100%;
+      font-size: 12px;
+      color: #c7d2ea;
+    }
+
+    .logo-preview {
+      width: 72px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px dashed rgba(255, 255, 255, 0.18);
+    }
+
+    .logo-preview img {
+      display: none;
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    .logo-preview img.on {
+      display: block;
+    }
+
+    .logo-preview.wide {
+      width: 132px;
+      height: 74px;
+    }
+
+    .team-logo-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .team-logo-head {
+      margin-bottom: 5px;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #8ea0c4;
+    }
+
+    /* ---------- Варианты табло ---------- */
+    body[data-layout="classic"] .box-title,
+    body[data-layout="classic"] .box-arena-name,
+    body[data-layout="classic"] .box-arena-score,
+    body[data-layout="classic"] .box-arena-counter,
+    body[data-layout="classic"] .box-arena-set {
+      border-radius: clamp(10px, 1.4vw, 20px);
+    }
+
+    body[data-layout="classic"] .box-arena-name {
+      justify-content: center;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    body[data-layout="classic"] .box-arena-score {
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+      border: 2px solid rgba(255, 255, 255, 0.14);
+      border-top: 0;
+    }
+
+    body[data-layout="classic"] .box-arena-counter {
+      padding: 6px;
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    body[data-layout="classic"] .box-arena-set {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    body[data-layout="broadcast"] .arena {
+      grid-template-columns: minmax(0, 0.8fr) minmax(90px, 0.5fr) clamp(190px, 21vw, 330px) minmax(90px, 0.5fr) minmax(0, 0.8fr);
+      grid-template-rows: auto minmax(0, 1fr);
+      grid-template-areas:
+        "title title title title title"
+        "homeIdentity homeScore mid awayScore awayIdentity";
+      gap: clamp(6px, 0.9vw, 14px);
+    }
+
+    body[data-layout="broadcast"] .box-arena-center,
+    body[data-layout="scorebug"] .box-arena-center {
+      grid-area: mid;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      gap: var(--mid-row-gap);
+      min-width: 0;
+      min-height: 0;
+      width: 100%;
+    }
+
+    body[data-layout="broadcast"] .box-arena-identity-home {
+      justify-content: flex-end;
+    }
+
+    body[data-layout="broadcast"] .box-arena-identity-away {
+      justify-content: flex-start;
+    }
+
+    body[data-layout="broadcast"] .box-arena-name {
+      padding: clamp(4px, 0.6vw, 8px) clamp(8px, 1.5vw, 22px);
+    }
+
+    body[data-layout="broadcast"] .el-arena-name {
+      font-size: calc(clamp(16px, 1.9vw, 34px) * var(--name-scale, 1) * var(--name-fit, 1));
+    }
+
+    body[data-layout="broadcast"] .box-arena-score {
+      padding: clamp(6px, 1vw, 12px) clamp(8px, 1.2vw, 18px);
+    }
+
+    body[data-layout="broadcast"] .el-arena-score {
+      font-size: calc(clamp(64px, 9.5vw, 160px) * var(--score-scale, 1) * var(--score-fit, 1));
+    }
+
+    body[data-layout="broadcast"] .box-arena-counters {
+      justify-content: center;
+    }
+
+    body[data-layout="duel"] .arena {
+      grid-template-columns: minmax(0, 1fr) clamp(210px, 24vw, 380px) minmax(0, 1fr);
+      grid-template-rows: auto auto minmax(0, 1fr);
+      grid-template-areas:
+        "title title title"
+        "homeIdentity heading awayIdentity"
+        "homeScore mid awayScore";
+      column-gap: clamp(10px, 1.6vw, 24px);
+    }
+
+    body[data-layout="duel"] .box-arena-identity-home,
+    body[data-layout="duel"] .box-arena-identity-away {
+      justify-content: center;
+    }
+
+    body[data-layout="duel"] .box-arena-name {
+      width: 100%;
+      justify-content: center;
+      border-radius: clamp(14px, 2vw, 28px) clamp(14px, 2vw, 28px) 0 0;
+    }
+
+    body[data-layout="duel"] .box-arena-score {
+      border-radius: 0 0 clamp(14px, 2vw, 28px) clamp(14px, 2vw, 28px);
+    }
+
+    body[data-layout="minimal"] .arena {
+      grid-template-areas:
+        "title title title"
+        "homeIdentity heading awayIdentity"
+        "homeScore mid awayScore";
+    }
+
+    body[data-layout="minimal"] .box-title {
+      background: transparent;
+      box-shadow: none;
+    }
+
+    body[data-layout="minimal"] .el-title {
+      font-weight: 400;
+      letter-spacing: 0.26em;
+    }
+
+    body[data-layout="minimal"] .box-arena-name {
+      background-color: transparent !important;
+      background-image: none !important;
+      box-shadow: none;
+      border-bottom: 2px solid currentColor;
+      border-radius: 0;
+      padding-left: 0;
+      padding-right: 0;
+      padding-bottom: clamp(2px, 0.5vw, 6px);
+    }
+
+    body[data-layout="minimal"] .box-arena-score {
+      background-color: transparent !important;
+      background-image: none !important;
+      box-shadow: none;
+    }
+
+    body[data-layout="minimal"] .box-arena-counter {
+      padding: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 10px;
+    }
+
+    body[data-layout="minimal"] .el-arena-counter-value {
+      background: transparent;
+      box-shadow: none;
+      min-height: auto;
+    }
+
+    body[data-layout="minimal"] .box-arena-mid {
+      background: transparent;
+      box-shadow: none;
+      border: 0;
+    }
+
+    body[data-layout="minimal"] .mid-pair {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 999px;
+      box-shadow: none;
+    }
+
+    body[data-layout="minimal"] .box-arena-set {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 999px;
+      box-shadow: none;
+    }
+
+    body[data-layout="minimal"] .box-arena-set.current {
+      border-color: rgba(255, 255, 255, 0.45);
+    }
+
+    body[data-layout="minimal"] .box-arena-mid .box-arena-set.current {
+      background: transparent;
+      box-shadow: none;
+      border-color: rgba(255, 255, 255, 0.45);
+    }
+
+    body[data-layout="glass"] .arena {
+      gap: clamp(6px, 1vw, 12px);
+    }
+
+    body[data-layout="glass"] .box-title,
+    body[data-layout="glass"] .box-arena-name,
+    body[data-layout="glass"] .box-arena-score,
+    body[data-layout="glass"] .box-arena-counter,
+    body[data-layout="glass"] .box-arena-set {
+      border-radius: clamp(14px, 2vw, 28px);
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 18px 40px -22px rgba(0, 0, 0, 0.9);
+      -webkit-backdrop-filter: blur(14px) saturate(1.2);
+      backdrop-filter: blur(14px) saturate(1.2);
+    }
+
+    body[data-layout="glass"] .box-title {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    body[data-layout="glass"] .box-arena-identity-home .box-arena-name {
+      background-color: color-mix(in srgb, var(--home-bg) 58%, transparent);
+      overflow: hidden;
+    }
+
+    body[data-layout="glass"] .box-arena-identity-away .box-arena-name {
+      background-color: color-mix(in srgb, var(--away-bg) 58%, transparent);
+      overflow: hidden;
+    }
+
+    body[data-layout="glass"] .box-arena-score-home {
+      background-color: color-mix(in srgb, var(--home-bg) 48%, transparent);
+      overflow: hidden;
+    }
+
+    body[data-layout="glass"] .box-arena-score-away {
+      background-color: color-mix(in srgb, var(--away-bg) 48%, transparent);
+      overflow: hidden;
+    }
+
+    body[data-layout="glass"] .box-arena-counter {
+      padding: clamp(4px, 0.6vw, 8px);
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    body[data-layout="glass"] .box-arena-counter .el-arena-counter-value {
+      background: transparent;
+      box-shadow: none;
+    }
+
+    body[data-layout="glass"] .box-arena-mid {
+      border-radius: clamp(14px, 2vw, 28px);
+      border: 0;
+      background-color: rgba(255, 255, 255, 0.08);
+      box-shadow: none;
+      -webkit-backdrop-filter: blur(14px) saturate(1.2);
+      backdrop-filter: blur(14px) saturate(1.2);
+    }
+
+    body[data-layout="glass"] .box-arena-set {
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    body[data-layout="glass"] .mid-pair {
+      border-radius: clamp(14px, 2vw, 28px);
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    body[data-layout="glass"] .box-arena-set.current {
+      background-color: rgba(255, 255, 255, 0.17);
+    }
+
+    body[data-layout="glass"] .box-arena-mid .box-arena-set.current {
+      background-color: rgba(255, 255, 255, 0.08);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45), var(--top-glow), var(--inner-shadow);
+    }
+
+    body[data-layout="scorebug"] .arena {
+      grid-template-columns: minmax(0, 0.8fr) minmax(90px, 0.5fr) clamp(180px, 20vw, 310px) minmax(90px, 0.5fr) minmax(0, 0.8fr);
+      grid-template-rows: auto auto;
+      grid-template-areas:
+        "title title title title title"
+        "homeIdentity homeScore mid awayScore awayIdentity";
+      align-content: center;
+      gap: clamp(4px, 0.8vw, 10px);
+      padding: clamp(8px, 1.4vw, 18px);
+    }
+
+    body[data-layout="scorebug"] .box-title {
+      padding: clamp(3px, 0.6vw, 6px) clamp(10px, 2vw, 20px);
+    }
+
+    body[data-layout="scorebug"] .el-title {
+      font-size: calc(clamp(11px, 1.2vw, 20px) * var(--title-scale, 1));
+      letter-spacing: 0.22em;
+    }
+
+    body[data-layout="scorebug"] .set-meta {
+      display: none;
+    }
+
+    body[data-layout="scorebug"] .box-arena-identity-home {
+      justify-content: flex-end;
+    }
+
+    body[data-layout="scorebug"] .box-arena-identity-away {
+      justify-content: flex-start;
+    }
+
+    body[data-layout="scorebug"] .box-arena-name {
+      padding: clamp(3px, 0.5vw, 6px) clamp(8px, 1.4vw, 18px);
+    }
+
+    body[data-layout="scorebug"] .el-arena-name {
+      font-size: calc(clamp(16px, 2vw, 34px) * var(--name-scale, 1) * var(--name-fit, 1));
+    }
+
+    body[data-layout="scorebug"] .box-arena-score {
+      padding: clamp(2px, 0.5vw, 6px) clamp(10px, 2vw, 24px);
+    }
+
+    body[data-layout="scorebug"] .el-arena-score {
+      font-size: calc(clamp(44px, 6vw, 100px) * var(--score-scale, 1) * var(--score-fit, 1));
+      line-height: 0.9;
+    }
+
+    body[data-layout="scorebug"] .box-arena-counters {
+      align-items: center;
+    }
+
+    body[data-layout="scorebug"] .box-arena-counters-home {
+      justify-content: flex-start;
+    }
+
+    body[data-layout="scorebug"] .box-arena-counters-away {
+      justify-content: flex-end;
+    }
+
+    body[data-layout="scorebug"] .box-arena-sets {
+      gap: var(--mid-row-gap, clamp(3px, 0.5vw, 8px));
+      padding: 0;
+    }
+
+    body[data-layout="scorebug"] .box-arena-set {
+      min-width: 0;
+      padding: clamp(2px, 0.4vw, 5px) clamp(8px, 1.2vw, 16px);
+      font-size: calc(clamp(14px, 1.6vw, 26px) * var(--set-scale, 1));
+    }
+
+    body[data-layout="scorebug"] .box-arena-mid .box-arena-set {
+      padding: calc(2px * var(--panel-scale, 1) * var(--mid-fit, 1)) calc(4px * var(--panel-scale, 1) * var(--mid-fit, 1));
+      gap: 2px;
+      font-size: calc(clamp(15px, 1.4vw, 22px) * var(--set-scale, 1) * var(--mid-fit, 1));
+    }
+
+    @media (max-width: 1180px) {
+      .set-meta {
+        display: none;
+      }
+    }
+
+    @media (max-width: 920px) {
+      .arena {
+        --name-font: clamp(22px, 9vw, 58px);
+        --score-font: clamp(72px, 19vw, 150px);
+      }
+
+      .box-arena-score {
+        padding-left: clamp(12px, 3vw, 30px);
+        padding-right: clamp(12px, 3vw, 30px);
+      }
+
+      .topbar {
+        grid-template-columns: auto 1fr auto;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .scale-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .field.full,
+      .checks,
+      .modal-note {
+        grid-column: auto;
+      }
+    }
+
+    @media (max-height: 700px) {
+      .arena {
+        padding: clamp(10px, 1.6vw, 20px);
+        gap: clamp(5px, 0.9vw, 10px);
+      }
+
+      .controls {
+        gap: 4px;
+      }
+
+      .ctrl {
+        padding-top: 4px;
+        padding-bottom: 4px;
+      }
+    }
+
+    /* ---------- Отдельное табло в стиле KeepTheScore (?style=kts) ---------- */
+    body.style-kts {
+      --bg: #16315e;
+      --title-bg: #16315e;
+      --text: #ffffff;
+      --font-family: "Bebas Neue", "Oswald", Roboto, system-ui, sans-serif;
+    }
+
+    body.style-kts .arena {
+      --name-font: clamp(30px, 6.4vw, 112px);
+      --score-font: clamp(150px, 24vw, 440px);
+      grid-template-columns: minmax(0, 1fr) clamp(44px, 5.2vw, 92px) minmax(0, 1fr);
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
+      grid-template-areas:
+        "title title title"
+        "homeIdentity . awayIdentity"
+        "homeScore . awayScore"
+        "bottom bottom bottom";
+      gap: clamp(6px, 1vw, 18px);
+      padding: clamp(10px, 1.5vw, 26px);
+    }
+
+    /* Нижняя полоса: SETS WON / TIME OUTS и партии в один ряд во всю ширину */
+    body.style-kts .box-bottom-bar {
+      grid-area: bottom;
+      display: flex;
+      align-items: stretch;
+      justify-content: space-between;
+      gap: clamp(6px, 1vw, 16px);
+      min-width: 0;
+    }
+
+    body.style-kts .box-title {
+      min-height: clamp(30px, 4.4vw, 78px);
+      padding: clamp(4px, 0.8vw, 14px) 0;
+      background: var(--title-bg);
+      border-radius: 0;
+      box-shadow: 0 clamp(1px, 0.14vw, 3px) 0 rgba(255, 255, 255, 0.14);
+    }
+
+    body.style-kts .el-title {
+      font-size: calc(clamp(18px, 3vw, 60px) * var(--title-scale, 1));
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: 0.03em;
+      text-shadow: none;
+    }
+
+    body.style-kts .set-meta,
+    body.style-kts .winner-badge {
+      display: none;
+    }
+
+    body.style-kts .box-arena-identity-home {
+      justify-content: flex-end;
+    }
+
+    body.style-kts .box-arena-identity-away {
+      justify-content: flex-start;
+    }
+
+    body.style-kts .box-arena-name {
+      background: transparent !important;
+      background-image: none !important;
+      color: var(--text) !important;
+      padding: 0;
+      border-radius: 0;
+      box-shadow: 0 clamp(1px, 0.14vw, 3px) 0 rgba(255, 255, 255, 0.22);
+    }
+
+    body.style-kts .el-arena-name {
+      text-shadow: none;
+    }
+
+    body.style-kts .box-arena-score {
+      background-image: none !important;
+      padding: clamp(3px, 0.5vw, 10px) clamp(10px, 2vw, 36px);
+      border-radius: 0;
+      box-shadow: 0 clamp(1px, 0.14vw, 3px) 0 rgba(255, 255, 255, 0.22);
+    }
+
+    body.style-kts .box-arena-score-home {
+      background-color: var(--home-bg) !important;
+      color: var(--home-fg) !important;
+    }
+
+    body.style-kts .box-arena-score-away {
+      background-color: var(--away-bg) !important;
+      color: var(--away-fg) !important;
+    }
+
+    body.style-kts .el-arena-score {
+      text-shadow: none;
+      line-height: 1;
+    }
+
+    body.style-kts .box-arena-center {
+      display: contents;
+    }
+
+    body.style-kts .box-arena-heading,
+    body.style-kts .box-arena-mid .mid-stats {
+      display: none;
+    }
+
+    body.style-kts .box-arena-mid {
+      display: contents;
+    }
+
+    /* Счётчики SETS WON / TIME OUTS используются только в стиле KeepTheScore */
+    .box-arena-counters {
+      display: none;
+    }
+
+    body.style-kts .box-arena-counters {
+      display: flex;
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: flex-start;
+      gap: clamp(6px, 0.9vw, 14px);
+    }
+
+    body.style-kts .box-arena-counters-away {
+      justify-content: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    body.style-kts .box-arena-counter {
+      min-width: clamp(46px, 4.6vw, 76px);
+      gap: 0;
+    }
+
+    body.style-kts .el-arena-counter-value {
+      width: auto;
+      min-width: clamp(32px, 4vw, 64px);
+      min-height: 0;
+      padding: 0 clamp(5px, 0.6vw, 12px);
+      background: rgba(0, 0, 0, 0.35);
+      box-shadow: 0 clamp(1px, 0.2vw, 4px) clamp(2px, 0.4vw, 7px) rgba(0, 0, 0, 0.45);
+      font-size: calc(clamp(22px, 3.6vw, 58px) * var(--mid-scale, 1));
+      line-height: 1.1;
+      text-shadow: none;
+    }
+
+    body.style-kts .counter-timeouts .el-arena-counter-value {
+      font-size: calc(clamp(22px, 3.6vw, 58px) * var(--mid-scale, 1));
+    }
+
+    body.style-kts .el-arena-counter-label {
+      font-size: calc(clamp(9px, 1.4vw, 24px) * var(--mid-scale, 1));
+      line-height: 1.04;
+      letter-spacing: 0.04em;
+      text-shadow: none;
+    }
+
+    body.style-kts .box-arena-sets {
+      flex: 1 1 auto;
+      min-width: 0;
+      flex-direction: row;
+      align-items: stretch;
+      justify-content: center;
+      padding: 0;
+      gap: clamp(6px, 1vw, 16px);
+      background: transparent;
+      border-radius: 0;
+      box-shadow: none;
+      overflow: hidden;
+    }
+
+    body.style-kts .box-arena-set {
+      flex: 1 1 0;
+      min-width: 0;
+      min-height: clamp(38px, 6vw, 96px);
+      padding: 0 clamp(4px, 0.6vw, 12px);
+      gap: clamp(2px, 0.4vw, 8px);
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 0;
+      box-shadow: 0 clamp(1px, 0.2vw, 4px) clamp(2px, 0.4vw, 7px) rgba(0, 0, 0, 0.45);
+      font-size: calc(clamp(15px, 3vw, 50px) * var(--set-scale, 1));
+      font-weight: 600;
+    }
+
+    body.style-kts .el-arena-set-score.winner {
+      font-weight: 900;
+    }
+
+    body.style-kts .box-arena-set.current {
+      border: 0;
+      background: rgba(0, 0, 0, 0.35);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18), 0 clamp(1px, 0.2vw, 4px) clamp(2px, 0.4vw, 7px) rgba(0, 0, 0, 0.45);
+    }
+
+    body.style-kts .box-arena-set.unplayed {
+      opacity: 0.72;
+    }
+
+    /* ---------- Отдельное табло для YouTube (прямой эфир) ---------- */
+    body.style-youtube {
+      --bg: #0f0f0f;
+      --title-bg: #0f0f0f;
+      --text: #ffffff;
+    }
+
+    .live-badge {
+      display: none;
+      align-items: center;
+      gap: 0.42em;
+      padding: 0.16em 0.55em;
+      background: #ff0033;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: clamp(10px, 1.45vw, 26px);
+      line-height: 1;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .live-badge[hidden] {
+      display: none;
+    }
+
+    .live-dot {
+      width: 0.52em;
+      height: 0.52em;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 0 0.5em rgba(255, 255, 255, 0.85);
+    }
+
+    body.style-youtube .live-badge {
+      display: inline-flex;
+      flex: 0 0 auto;
+      animation: live-pulse 2.4s ease-in-out infinite;
+    }
+
+    @keyframes live-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.72; }
+    }
+
+    body.style-youtube .arena {
+      --name-font: clamp(28px, 5.8vw, 100px);
+      --score-font: clamp(150px, 24vw, 440px);
+      grid-template-columns: minmax(0, 1fr) clamp(44px, 5.2vw, 92px) minmax(0, 1fr);
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
+      grid-template-areas:
+        "title title title"
+        "homeIdentity . awayIdentity"
+        "homeScore . awayScore"
+        "bottom bottom bottom";
+      gap: clamp(6px, 1vw, 18px);
+      padding: clamp(10px, 1.5vw, 26px);
+    }
+
+    body.style-youtube .box-bottom-bar {
+      grid-area: bottom;
+      display: flex;
+      align-items: stretch;
+      justify-content: space-between;
+      gap: clamp(6px, 1vw, 16px);
+      min-width: 0;
+    }
+
+    body.style-youtube .box-title {
+      min-height: clamp(34px, 4.8vw, 84px);
+      padding: clamp(4px, 0.8vw, 14px) clamp(6px, 1vw, 18px);
+      background: var(--title-bg);
+      border-radius: 0;
+      box-shadow: 0 clamp(2px, 0.3vw, 5px) 0 #ff0033;
+    }
+
+    body.style-youtube .el-title {
+      font-size: calc(clamp(18px, 3vw, 58px) * var(--title-scale, 1));
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: 0.06em;
+      text-shadow: none;
+    }
+
+    body.style-youtube .set-meta {
+      color: var(--text);
+      opacity: 0.65;
+      text-shadow: none;
+    }
+
+    body.style-youtube .winner-badge {
+      display: none;
+    }
+
+    body.style-youtube .box-arena-identity-home {
+      justify-content: flex-end;
+    }
+
+    body.style-youtube .box-arena-identity-away {
+      justify-content: flex-start;
+    }
+
+    body.style-youtube .box-arena-name {
+      background: transparent !important;
+      background-image: none !important;
+      color: var(--text) !important;
+      padding: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    body.style-youtube .el-arena-name {
+      text-shadow: none;
+      font-weight: 700;
+    }
+
+    body.style-youtube .box-arena-score {
+      background-image: none !important;
+      padding: clamp(4px, 0.6vw, 12px) clamp(10px, 2vw, 36px);
+      border-radius: clamp(4px, 0.7vw, 12px);
+      box-shadow: inset 0 clamp(2px, 0.36vw, 6px) 0 #ff0033;
+    }
+
+    body.style-youtube .box-arena-score-home {
+      background-color: var(--home-bg) !important;
+      color: var(--home-fg) !important;
+    }
+
+    body.style-youtube .box-arena-score-away {
+      background-color: var(--away-bg) !important;
+      color: var(--away-fg) !important;
+    }
+
+    body.style-youtube .el-arena-score {
+      font-weight: 700;
+      line-height: 1;
+      text-shadow: none;
+    }
+
+    body.style-youtube .box-arena-center {
+      display: contents;
+    }
+
+    body.style-youtube .box-arena-heading,
+    body.style-youtube .box-arena-mid .mid-stats {
+      display: none;
+    }
+
+    body.style-youtube .box-arena-mid {
+      display: contents;
+    }
+
+    body.style-youtube .box-arena-counters {
+      display: flex;
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: flex-start;
+      gap: clamp(6px, 0.9vw, 14px);
+    }
+
+    body.style-youtube .box-arena-counters-away {
+      justify-content: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    body.style-youtube .box-arena-counter {
+      min-width: clamp(46px, 4.6vw, 76px);
+      gap: clamp(2px, 0.35vw, 6px);
+    }
+
+    body.style-youtube .el-arena-counter-value {
+      width: auto;
+      min-width: clamp(32px, 4vw, 64px);
+      min-height: 0;
+      padding: 0 clamp(5px, 0.6vw, 12px);
+      background: color-mix(in srgb, var(--text) 14%, transparent);
+      border-radius: clamp(3px, 0.5vw, 8px);
+      box-shadow: none;
+      font-size: calc(clamp(22px, 3.6vw, 58px) * var(--mid-scale, 1));
+      line-height: 1.1;
+      text-shadow: none;
+    }
+
+    body.style-youtube .counter-timeouts .el-arena-counter-value {
+      font-size: calc(clamp(22px, 3.6vw, 58px) * var(--mid-scale, 1));
+    }
+
+    body.style-youtube .counter-timeouts .el-arena-counter-value:hover {
+      background: color-mix(in srgb, var(--text) 26%, transparent);
+    }
+
+    body.style-youtube .el-arena-counter-label {
+      font-size: calc(clamp(9px, 1.4vw, 24px) * var(--mid-scale, 1));
+      line-height: 1.04;
+      letter-spacing: 0.04em;
+      opacity: 0.72;
+      text-shadow: none;
+    }
+
+    body.style-youtube .box-arena-sets {
+      flex: 1 1 auto;
+      min-width: 0;
+      flex-direction: row;
+      align-items: stretch;
+      justify-content: center;
+      padding: 0;
+      gap: clamp(6px, 1vw, 16px);
+      background: transparent;
+      border-radius: 0;
+      box-shadow: none;
+      overflow: hidden;
+    }
+
+    body.style-youtube .box-arena-set {
+      flex: 1 1 0;
+      min-width: 0;
+      min-height: clamp(38px, 6vw, 96px);
+      padding: 0 clamp(4px, 0.6vw, 12px);
+      gap: clamp(2px, 0.4vw, 8px);
+      background: color-mix(in srgb, var(--text) 14%, transparent);
+      border-radius: clamp(3px, 0.5vw, 8px);
+      box-shadow: none;
+      font-size: calc(clamp(15px, 3vw, 50px) * var(--set-scale, 1));
+      font-weight: 600;
+    }
+
+    body.style-youtube .el-arena-set-score.winner {
+      font-weight: 900;
+    }
+
+    body.style-youtube .box-arena-set.current {
+      border: 0;
+      background: color-mix(in srgb, var(--text) 22%, transparent);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.32);
+    }
+
+    body.style-youtube .box-arena-set.unplayed {
+      opacity: 0.55;
+    }
+
+    /* ---------- Пятое табло: YouTube «сеты» (таблица как у KeepTheScore) ---------- */
+    body.style-ytsets {
+      --bg: #16315e;
+      --title-bg: #16315e;
+      --text: #ffffff;
+      --sets-finish: linear-gradient(180deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.03) 40%, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.22) 100%);
+      --sets-bevel: inset 0 clamp(1px, 0.12vw, 3px) 0 rgba(255, 255, 255, 0.22),
+        inset 0 calc(clamp(1px, 0.12vw, 3px) * -1.7) 0 rgba(0, 0, 0, 0.35);
+    }
+
+    body.style-ytsets .arena {
+      --name-font: clamp(30px, 6vw, 118px);
+      grid-template-columns: minmax(0, 1fr) calc(var(--set-cols, 5) * clamp(56px, 9.6vw, 188px));
+      grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) auto;
+      grid-template-areas:
+        "home sets"
+        "away sets"
+        "title title";
+      gap: 0;
+      padding: 0;
+      border-radius: 0;
+    }
+
+    /* Команда: светлая панель во всю строку, название слева, сеты справа */
+    body.style-ytsets .box-arena-identity {
+      align-self: stretch;
+      justify-self: stretch;
+      padding: 0;
+      background-image: var(--sets-finish);
+      box-shadow: var(--sets-bevel);
+      z-index: 0;
+    }
+
+    body.style-ytsets .box-arena-identity-home {
+      grid-area: home;
+      background-color: var(--home-bg);
+      color: var(--home-fg);
+    }
+
+    body.style-ytsets .box-arena-identity-away {
+      grid-area: away;
+      background-color: var(--away-bg);
+      color: var(--away-fg);
+    }
+
+    body.style-ytsets .box-arena-name {
+      background: transparent !important;
+      background-image: none !important;
+      box-shadow: none;
+      color: inherit !important;
+      justify-content: flex-start;
+      gap: 0;
+      padding: 0 clamp(12px, 2vw, 42px);
+      padding-right: clamp(58px, 9vw, 190px);
+      width: 100%;
+    }
+
+    body.style-ytsets .box-arena-name::after,
+    body.style-ytsets .el-serve {
+      display: none;
+    }
+
+    body.style-ytsets .el-team-logo {
+      height: calc(var(--team-logo-height, 64px) * 0.8);
+      margin-right: clamp(8px, 1vw, 18px);
+    }
+
+    body.style-ytsets .el-arena-name {
+      font-weight: 400;
+      letter-spacing: 0.01em;
+      text-shadow: none;
+      max-width: 100%;
+    }
+
+    /* Счётчики переехали из нижней полосы прямо в строку команды */
+    body.style-ytsets .box-bottom-bar {
+      display: contents;
+    }
+
+    body.style-ytsets .box-arena-counters {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0;
+      align-self: stretch;
+      justify-self: stretch;
+      padding: 0 clamp(12px, 2vw, 42px);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    body.style-ytsets .box-arena-counters-home {
+      grid-area: home;
+    }
+
+    body.style-ytsets .box-arena-counters-away {
+      grid-area: away;
+      flex-direction: row;
+      justify-content: flex-end;
+    }
+
+    body.style-ytsets .counter-timeouts {
+      display: none;
+    }
+
+    body.style-ytsets .counter-sets {
+      min-width: 0;
+      gap: 0;
+    }
+
+    body.style-ytsets .counter-sets .el-arena-counter-label {
+      display: none;
+    }
+
+    body.style-ytsets .el-arena-counter-value {
+      width: auto;
+      min-width: 0;
+      min-height: 0;
+      padding: 0;
+      background: transparent;
+      box-shadow: none;
+      font-size: calc(clamp(30px, 6vw, 118px) * var(--mid-scale, 1));
+      font-weight: 900;
+      line-height: 1;
+      text-shadow: none;
+    }
+
+    /* Сетка сетов: каждая партия — колонка, счёт команды сверху и снизу */
+    body.style-ytsets .box-arena-sets {
+      grid-area: sets;
+      flex: 1 1 auto;
+      min-width: 0;
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      justify-content: stretch;
+      gap: 0;
+      padding: 0;
+      overflow: hidden;
+      background: transparent;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    body.style-ytsets .box-arena-set {
+      flex: 1 1 0;
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: stretch;
+      gap: 0;
+      padding: 0;
+      background: transparent;
+      border-radius: 0;
+      box-shadow: none;
+      font-size: calc(clamp(26px, 5vw, 104px) * var(--set-scale, 1));
+      font-weight: 400;
+    }
+
+    body.style-ytsets .el-arena-set-score {
+      flex: 1 1 0;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 clamp(2px, 0.4vw, 10px);
+      background-color: var(--bg);
+      background-image: var(--sets-finish);
+      color: var(--text);
+      box-shadow: var(--sets-bevel);
+      line-height: 1;
+    }
+
+    body.style-ytsets .el-arena-set-sep {
+      display: none;
+    }
+
+    body.style-ytsets .box-arena-set:not(.current):not(.unplayed) .el-arena-set-score {
+      opacity: 0.72;
+    }
+
+    body.style-ytsets .el-arena-set-score.winner {
+      font-weight: 900;
+    }
+
+    /* Несыгранная партия: два прочерка — сверху и снизу */
+    body.style-ytsets .box-arena-set.unplayed .el-arena-set-empty {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      color: transparent;
+      opacity: 1;
+    }
+
+    body.style-ytsets .box-arena-set.unplayed .el-arena-set-empty::before,
+    body.style-ytsets .box-arena-set.unplayed .el-arena-set-empty::after {
+      content: "-";
+      flex: 1 1 0;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--bg);
+      background-image: var(--sets-finish);
+      box-shadow: var(--sets-bevel);
+      color: color-mix(in srgb, var(--text) 38%, transparent);
+    }
+
+    body.style-ytsets .box-arena-score {
+      display: none;
+    }
+
+    body.style-ytsets .box-arena-center {
+      display: contents;
+    }
+
+    body.style-ytsets .box-arena-heading,
+    body.style-ytsets .box-arena-mid .mid-stats {
+      display: none;
+    }
+
+    body.style-ytsets .box-arena-mid {
+      display: contents;
+    }
+
+    /* Заголовок — нижней полосой во всю ширину */
+    body.style-ytsets .box-title {
+      grid-area: title;
+      min-height: clamp(36px, 9vh, 104px);
+      padding: 0 clamp(70px, 9vw, 170px);
+      background: var(--title-bg);
+      background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.18) 100%);
+      border-radius: 0;
+      box-shadow: inset 0 clamp(1px, 0.12vw, 3px) 0 rgba(255, 255, 255, 0.14);
+    }
+
+    body.style-ytsets .el-title {
+      max-width: 100%;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: calc(clamp(18px, 3vw, 56px) * var(--title-scale, 1));
+      font-weight: 400;
+      line-height: 1.45;
+      letter-spacing: 0.04em;
+      text-shadow: none;
+    }
+
+    body.style-ytsets .set-meta,
+    body.style-ytsets .winner-badge {
+      display: none;
+    }
+
+    body.style-ytsets .live-badge {
+      display: inline-flex;
+      position: absolute;
+      right: clamp(8px, 1.6vw, 26px);
+      top: 50%;
+      transform: translateY(-50%);
+      animation: live-pulse 2.4s ease-in-out infinite;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg-layer" id="bgLayer" aria-hidden="true" hidden></div>
+  <div class="bg-shade" id="bgShade" aria-hidden="true" hidden></div>
+
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="sync-pill offline" id="syncPill" type="button" title="Статус синхронизации — нажмите, чтобы скопировать ссылки">
+          <span class="sync-dot"></span>
+          <span id="syncText">офлайн</span>
+        </button>
+      </div>
+      <div class="topbar-right">
+        <button class="icon-btn" id="boardBtn" type="button" title="Открыть табло в новой вкладке (B)">📺</button>
+        <button class="icon-btn" id="remoteBtn" type="button" title="Пульт для телефона — счёт и тайм-ауты">📱</button>
+        <button class="icon-btn" id="soundBtn" type="button" title="Звук">🔊</button>
+        <button class="icon-btn" id="settingsBtn" type="button" title="Настройки">⚙</button>
+        <button class="icon-btn" id="fsBtn" type="button" title="Полный экран (F)">⛶</button>
+      </div>
+    </header>
+
+    <main>
+      <div class="arena-frame">
+        <div class="arena" id="arena">
+          <div class="box-title">
+            <img class="el-logo" id="logoImg" alt="Логотип" hidden>
+            <span class="winner-badge" id="winnerBadge" hidden>🏆 <span id="winnerName"></span></span>
+            <span class="live-badge" id="liveBadge" hidden><span class="live-dot"></span>LIVE</span>
+            <div class="el-title" contenteditable spellcheck="false" id="matchTitle">ВОЛЕЙБОЛ</div>
+            <div class="set-meta" id="setMeta">ПАРТИЯ 1 · ДО 25</div>
+          </div>
+
+          <div class="box-arena-identity box-arena-identity-home">
+            <div class="box-arena-name">
+              <span class="el-serve" id="serveA" data-team="A" title="Подача: нажмите, чтобы переключить">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 3c3.4 2.9 5 5.9 5 9s-1.6 6.1-5 9" />
+                  <path d="M12 3c-3.4 2.9-5 5.9-5 9s1.6 6.1 5 9" />
+                  <path d="M3.4 9.2c4 1.7 7.9 1.7 11.9 0M3.4 14.8c4-1.7 7.9-1.7 11.9 0" />
+                </svg>
+              </span>
+              <img class="el-team-logo" id="teamLogoA" alt="Логотип команды A" hidden>
+              <span class="el-arena-name" contenteditable spellcheck="false" data-team="A" id="nameA">КАРА-КУЛЖА</span>
+            </div>
+          </div>
+
+          <div class="box-arena-identity box-arena-identity-away">
+            <div class="box-arena-name">
+              <span class="el-serve" id="serveB" data-team="B" title="Подача: нажмите, чтобы переключить">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 3c3.4 2.9 5 5.9 5 9s-1.6 6.1-5 9" />
+                  <path d="M12 3c-3.4 2.9-5 5.9-5 9s1.6 6.1 5 9" />
+                  <path d="M3.4 9.2c4 1.7 7.9 1.7 11.9 0M3.4 14.8c4-1.7 7.9-1.7 11.9 0" />
+                </svg>
+              </span>
+              <img class="el-team-logo" id="teamLogoB" alt="Логотип команды B" hidden>
+              <span class="el-arena-name" contenteditable spellcheck="false" data-team="B" id="nameB">НООКАТ</span>
+            </div>
+          </div>
+
+          <div class="box-arena-center">
+            <div class="box-arena-heading">
+              <div class="mid-pair mid-sets-won">
+                <span class="mid-label">Sets Won</span>
+                <span class="mid-value"><span id="midSetsWonA">0</span><span class="mid-sep">:</span><span id="midSetsWonB">0</span></span>
+              </div>
+            </div>
+
+            <div class="box-arena-mid">
+              <div class="mid-stats">
+                <div class="mid-pair mid-timeouts">
+                  <span class="mid-label">Time Outs</span>
+                  <span class="mid-value"><span class="mid-to" id="midToA" data-team="A" title="Тайм-аут: нажмите, чтобы потратить">2</span><span class="mid-sep">:</span><span class="mid-to" id="midToB" data-team="B" title="Тайм-аут: нажмите, чтобы потратить">2</span></span>
+                </div>
+              </div>
+              <div class="box-arena-sets" id="midSetsRow"></div>
+            </div>
+          </div>
+
+          <div class="box-arena-score box-arena-score-home" id="scoreBoxA" data-team="A" title="Клик — +1, Shift+клик — −1">
+            <div class="el-arena-score" id="scoreA">0</div>
+          </div>
+          <div class="box-arena-score box-arena-score-away" id="scoreBoxB" data-team="B" title="Клик — +1, Shift+клик — −1">
+            <div class="el-arena-score" id="scoreB">0</div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="controls">
+      <button class="ctrl" id="minusA" type="button" title="Убрать очко (Z)">−1</button>
+      <button class="ctrl accent" id="plusA" type="button" title="Добавить очко (A)">+1</button>
+      <button class="ctrl" id="upA" type="button">▲</button>
+      <button class="ctrl" id="toAbtn" type="button" title="Тайм-аут">⏱</button>
+      <span class="ctrl-sep"></span>
+      <button class="ctrl" id="minusB" type="button" title="Убрать очко (M)">−1</button>
+      <button class="ctrl accent" id="plusB" type="button" title="Добавить очко (K)">+1</button>
+      <button class="ctrl" id="upB" type="button">▲</button>
+      <button class="ctrl" id="toBbtn" type="button" title="Тайм-аут">⏱</button>
+      <span class="ctrl-sep"></span>
+      <button class="ctrl" id="endSet" type="button" title="Завершить текущую партию (S)">Партия</button>
+      <button class="ctrl" id="resetSet" type="button" title="Сбросить очки текущей партии (R)">Сброс</button>
+      <button class="ctrl" id="undo" type="button" title="Отменить (U)">↶</button>
+      <span class="ctrl-sep"></span>
+      <button class="ctrl" id="newMatch" type="button" title="Новый матч (N)">Новый матч</button>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="overlay" id="settingsOverlay" hidden>
+    <form class="modal" id="settingsForm">
+      <h2>Настройки</h2>
+      <div class="form-grid">
+        <div class="field full">
+          <label for="fMatch">Заголовок матча</label>
+          <input id="fMatch" name="match" type="text" maxlength="40" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="fRoom">Комната синхронизации</label>
+          <input id="fRoom" name="room" type="text" maxlength="40" autocomplete="off" placeholder="main">
+        </div>
+        <div class="field">
+          <label for="fTeamA">Команда A</label>
+          <input id="fTeamA" name="teamA" type="text" maxlength="30" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="fTeamB">Команда B</label>
+          <input id="fTeamB" name="teamB" type="text" maxlength="30" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="fBestOf">Формат матча</label>
+          <select id="fBestOf" name="bestOf">
+            <option value="1">До 1 победы (1 партия)</option>
+            <option value="3">До 2 побед (3 партии)</option>
+            <option value="5">До 3 побед (5 партий)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fPoints">Партия до</label>
+          <select id="fPoints" name="points">
+            <option value="11">11 очков</option>
+            <option value="15">15 очков</option>
+            <option value="21">21 очко</option>
+            <option value="25">25 очков</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fDeciding">Решающая партия до</label>
+          <select id="fDeciding" name="deciding">
+            <option value="11">11 очков</option>
+            <option value="15">15 очков</option>
+            <option value="21">21 очко</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fTheme">Тема</label>
+          <select id="fTheme" name="theme">
+            <option value="arena">Arena (как на KeepTheScore)</option>
+            <option value="kts">KeepTheScore (тёмно-синяя)</option>
+            <option value="dark">Тёмная</option>
+            <option value="blue">Синяя</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fFont">Шрифт</label>
+          <select id="fFont" name="font">
+            <option value="bebas">Bebas Neue / Oswald (Arena)</option>
+            <option value="oswald">Oswald</option>
+            <option value="anton">Anton / Russo One</option>
+            <option value="montserrat">Montserrat</option>
+            <option value="roboto">Roboto Condensed</option>
+            <option value="system">Системный</option>
+          </select>
+          <div class="font-preview" id="fontPreview">КОМАНДА · SETS WON 25:23</div>
+        </div>
+        <div class="field full">
+          <label for="fLayout">Вариант табло</label>
+          <select id="fLayout" name="layout">
+            <option value="arena">Arena — как KeepTheScore (текущий)</option>
+            <option value="classic">Классика — карточки с рамками</option>
+            <option value="broadcast">Трансляция — команды в одну строку</option>
+            <option value="duel">Дуэль — две половины без тире</option>
+            <option value="minimal">Минимал — прозрачно, без плашек</option>
+            <option value="glass">Стекло — полупрозрачные карточки</option>
+            <option value="scorebug">Оверлей — компактная плашка для OBS</option>
+            <option value="kts">KeepTheScore — третье табло (тёмно-синее)</option>
+            <option value="youtube">YouTube — табло для прямого эфира</option>
+            <option value="ytsets">YouTube — сеты (как KeepTheScore)</option>
+          </select>
+          <label class="check"><input type="checkbox" id="fYoutube" name="youtube"> Табло для YouTube (прямой эфир)</label>
+        </div>
+        <div class="field full">
+          <div class="scale-head">
+            <label>Размеры шрифтов и плашек</label>
+            <button class="btn small" type="button" id="scaleReset">Сбросить 100%</button>
+          </div>
+          <div class="scale-grid">
+            <label class="scale-item">
+              <span>Заголовок матча</span>
+              <output data-scale-out="titleScale">100%</output>
+              <input type="range" name="titleScale" min="50" max="150" step="5" value="100">
+            </label>
+            <label class="scale-item">
+              <span>Названия команд</span>
+              <output data-scale-out="nameScale">100%</output>
+              <input type="range" name="nameScale" min="50" max="150" step="5" value="100">
+            </label>
+            <label class="scale-item">
+              <span>Счёт</span>
+              <output data-scale-out="scoreScale">100%</output>
+              <input type="range" name="scoreScale" min="50" max="150" step="5" value="100">
+            </label>
+            <label class="scale-item">
+              <span>Блок Sets Won / Time Outs</span>
+              <output data-scale-out="midScale">100%</output>
+              <input type="range" name="midScale" min="50" max="150" step="5" value="100">
+            </label>
+            <label class="scale-item">
+              <span>История партий</span>
+              <output data-scale-out="setScale">100%</output>
+              <input type="range" name="setScale" min="50" max="150" step="5" value="100">
+            </label>
+            <label class="scale-item">
+              <span>Размер плашек у всех блоков</span>
+              <output data-scale-out="panelScale">100%</output>
+              <input type="range" name="panelScale" min="70" max="140" step="5" value="100">
+            </label>
+          </div>
+        </div>
+        <div class="field full">
+          <label>Цвета</label>
+          <div class="color-grid">
+            <label class="color-item">Фон<input type="color" name="bg"></label>
+            <label class="color-item">Плашка<input type="color" name="titleBg"></label>
+            <label class="color-item">Текст<input type="color" name="text"></label>
+            <label class="color-item">A — фон<input type="color" name="homeBg"></label>
+            <label class="color-item">A — текст<input type="color" name="homeFg"></label>
+            <label class="color-item">B — фон<input type="color" name="awayBg"></label>
+            <label class="color-item">B — текст<input type="color" name="awayFg"></label>
+          </div>
+        </div>
+        <div class="field full">
+          <label for="fLogo">Логотип (PNG/SVG/JPG, до 12 МБ — сожмётся автоматически)</label>
+          <div class="logo-row">
+            <input id="fLogo" name="logo" type="file" accept="image/*">
+            <button class="btn small" type="button" id="logoClear">Убрать</button>
+            <span class="logo-preview"><img id="logoPreview" alt=""></span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="fLogoHeight">Размер логотипа, px</label>
+          <input id="fLogoHeight" name="logoHeight" type="number" min="16" max="200" step="1">
+        </div>
+        <div class="field">
+          <label for="fLogoPos">Положение логотипа</label>
+          <select id="fLogoPos" name="logoPos">
+            <option value="left">Слева</option>
+            <option value="right">Справа</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label>Логотипы команд (PNG/SVG/JPG, до 12 МБ — сожмутся автоматически)</label>
+          <div class="team-logo-grid">
+            <div>
+              <div class="team-logo-head">Команда A</div>
+              <div class="logo-row">
+                <input id="fTeamLogoA" name="teamLogoA" type="file" accept="image/*">
+                <button class="btn small" type="button" id="teamLogoAClear">Убрать</button>
+                <span class="logo-preview"><img id="teamLogoAPreview" alt=""></span>
+              </div>
+            </div>
+            <div>
+              <div class="team-logo-head">Команда B</div>
+              <div class="logo-row">
+                <input id="fTeamLogoB" name="teamLogoB" type="file" accept="image/*">
+                <button class="btn small" type="button" id="teamLogoBClear">Убрать</button>
+                <span class="logo-preview"><img id="teamLogoBPreview" alt=""></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="fTeamLogoHeight">Размер логотипов команд, px</label>
+          <input id="fTeamLogoHeight" name="teamLogoHeight" type="number" min="16" max="160" step="1">
+        </div>
+        <div class="field full">
+          <label for="fBgImage">Фон табло (PNG / JPG / WEBP, до 12 МБ)</label>
+          <div class="logo-row">
+            <input id="fBgImage" name="bgImage" type="file" accept="image/*">
+            <button class="btn small" type="button" id="bgImageClear">Убрать</button>
+            <span class="logo-preview wide"><img id="bgImagePreview" alt=""></span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="fBgFit">Как вписать фон</label>
+          <select id="fBgFit" name="bgFit">
+            <option value="cover">Заполнить (обрезать)</option>
+            <option value="contain">Вписать целиком</option>
+            <option value="stretch">Растянуть</option>
+            <option value="repeat">Мозаика</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fBgDim">Затемнение фона, %</label>
+          <input id="fBgDim" name="bgDim" type="number" min="0" max="90" step="5">
+        </div>
+        <div class="field">
+          <label for="fBgBlur">Размытие фона, px</label>
+          <input id="fBgBlur" name="bgBlur" type="number" min="0" max="30" step="1">
+        </div>
+        <div class="field full">
+          <label>Фон команд (PNG / JPG / WEBP, до 12 МБ)</label>
+          <div class="team-logo-grid">
+            <div>
+              <div class="team-logo-head">Команда A</div>
+              <div class="logo-row">
+                <input id="fHomeImage" name="homeImage" type="file" accept="image/*">
+                <button class="btn small" type="button" id="homeImageClear">Убрать</button>
+                <span class="logo-preview wide"><img id="homeImagePreview" alt=""></span>
+              </div>
+            </div>
+            <div>
+              <div class="team-logo-head">Команда B</div>
+              <div class="logo-row">
+                <input id="fAwayImage" name="awayImage" type="file" accept="image/*">
+                <button class="btn small" type="button" id="awayImageClear">Убрать</button>
+                <span class="logo-preview wide"><img id="awayImagePreview" alt=""></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="fTeamImageDim">Затемнение фона команд, %</label>
+          <input id="fTeamImageDim" name="teamImageDim" type="number" min="0" max="90" step="5">
+        </div>
+        <div class="checks">
+          <label class="check"><input type="checkbox" name="autoClose"> Автоматически закрывать партию</label>
+          <label class="check"><input type="checkbox" name="sound"> Звуки</label>
+          <label class="check"><input type="checkbox" name="showTimeouts"> Показывать тайм-ауты</label>
+        </div>
+        <p class="modal-note">
+          Отдельная страница табло — <code id="boardLinkText">…</code>.<br>
+          Пульт для телефона — <code id="remoteLinkText">…</code>.<br>
+          OBS: полное табло — <code id="obsFull">…</code>, компактный оверлей — <code id="obsBug">…</code>.
+          Для прозрачного фона добавьте <code>bg=transparent</code>.
+        </p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" type="button" id="settingsCancel">Отмена</button>
+        <button class="btn primary" type="submit">Сохранить</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const $ = (sel) => document.querySelector(sel);
+      const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+      const clone = (v) => JSON.parse(JSON.stringify(v));
+      const params = new URLSearchParams(location.search);
+      const DISPLAY = params.get('display') === '1';
+      const KTS_STYLE = params.get('style') === 'kts';
+      const YT_STYLE = params.get('style') === 'youtube';
+      const SETS_STYLE = params.get('style') === 'sets';
+      const LS_KEY = 'arena-volley-v2';
+      const MAX_TIMEOUTS = 2;
+
+      const FONTS = {
+        bebas: '"Bebas Neue", "Oswald", Roboto, system-ui, sans-serif',
+        oswald: '"Oswald", system-ui, sans-serif',
+        anton: '"Anton", "Russo One", system-ui, sans-serif',
+        montserrat: '"Montserrat", system-ui, sans-serif',
+        roboto: '"Roboto Condensed", system-ui, sans-serif',
+        system: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+      };
+
+      const THEMES = {
+        arena: { bg: '#28ff05', titleBg: '#1eff65', text: '#ffffff', homeBg: '#141fff', homeFg: '#f9ca24', awayBg: '#202132', awayFg: '#ffffff' },
+        kts: { bg: '#16315e', titleBg: '#1b3a6b', text: '#ffffff', homeBg: '#1f4173', homeFg: '#ffffff', awayBg: '#182f57', awayFg: '#cfe3ff' },
+        dark: { bg: '#060a14', titleBg: '#1b2540', text: '#ffffff', homeBg: '#1d4ed8', homeFg: '#ffffff', awayBg: '#232a3d', awayFg: '#ffffff' },
+        blue: { bg: '#071224', titleBg: '#173d73', text: '#ffffff', homeBg: '#2563eb', homeFg: '#ffffff', awayBg: '#0e1b30', awayFg: '#7dd3fc' }
+      };
+
+      const COLOR_KEYS = ['bg', 'titleBg', 'text', 'homeBg', 'homeFg', 'awayBg', 'awayFg'];
+      const FONT_KEYS = Object.keys(FONTS);
+      // Отдельные цвета и шрифт третьего табло (KeepTheScore): правки не задевают остальные табло.
+      const KTS_PALETTE = {
+        bg: '#16315e',
+        titleBg: '#16315e',
+        text: '#ffffff',
+        homeBg: '#35445e',
+        homeFg: '#ffffff',
+        awayBg: '#35445e',
+        awayFg: '#ffffff'
+      };
+      const KTS_FONT = 'bebas';
+      // Отдельные цвета и шрифт четвёртого табло (YouTube, прямой эфир).
+      const YT_PALETTE = {
+        bg: '#0f0f0f',
+        titleBg: '#0f0f0f',
+        text: '#ffffff',
+        homeBg: '#272727',
+        homeFg: '#ffffff',
+        awayBg: '#272727',
+        awayFg: '#ffffff'
+      };
+      const YT_FONT = 'roboto';
+      // Отдельные цвета и шрифт пятого табло (YouTube — таблица сетов, как KeepTheScore).
+      const SETS_PALETTE = {
+        bg: '#16315e',
+        titleBg: '#16315e',
+        text: '#ffffff',
+        homeBg: '#35445e',
+        homeFg: '#ffffff',
+        awayBg: '#35445e',
+        awayFg: '#ffffff'
+      };
+      const SETS_FONT = 'bebas';
+      const LAYOUT_KEYS = ['arena', 'classic', 'broadcast', 'duel', 'minimal', 'glass', 'scorebug', 'kts', 'youtube', 'ytsets'];
+      const SCALE_KEYS = ['titleScale', 'nameScale', 'scoreScale', 'midScale', 'setScale', 'panelScale'];
+      const SCALE_VARS = {
+        titleScale: '--title-scale',
+        nameScale: '--name-scale',
+        scoreScale: '--score-scale',
+        midScale: '--mid-scale',
+        setScale: '--set-scale',
+        panelScale: '--panel-scale'
+      };
+      const SCALE_LIMITS = {
+        titleScale: [50, 150],
+        nameScale: [50, 150],
+        scoreScale: [50, 150],
+        midScale: [50, 150],
+        setScale: [50, 150],
+        panelScale: [70, 140]
+      };
+
+      const defaultState = () => ({
+        rev: 0,
+        names: { A: 'КАРА-КУЛЖА', B: 'НООКАТ' },
+        titles: { match: 'ВОЛЕЙБОЛ' },
+        score: { A: 0, B: 0 },
+        setsWon: { A: 0, B: 0 },
+        sets: [],
+        setNumber: 1,
+        serve: null,
+        timeouts: { A: MAX_TIMEOUTS, B: MAX_TIMEOUTS },
+        matchOver: false,
+        design: {
+          font: 'bebas',
+          layout: 'arena',
+          titleScale: 100,
+          nameScale: 100,
+          scoreScale: 100,
+          midScale: 100,
+          setScale: 100,
+          panelScale: 100,
+          bg: '#28ff05',
+          titleBg: '#1eff65',
+          text: '#ffffff',
+          homeBg: '#141fff',
+          homeFg: '#f9ca24',
+          awayBg: '#202132',
+          awayFg: '#ffffff',
+          kts: Object.assign({}, KTS_PALETTE),
+          ktsFont: KTS_FONT,
+          youtube: Object.assign({}, YT_PALETTE),
+          youtubeFont: YT_FONT,
+          ytsets: Object.assign({}, SETS_PALETTE),
+          ytsetsFont: SETS_FONT,
+          logo: '',
+          logoHeight: 64,
+          logoPos: 'left',
+          teamLogoA: '',
+          teamLogoB: '',
+          teamLogoHeight: 56,
+          bgImage: '',
+          bgFit: 'cover',
+          bgDim: 35,
+          bgBlur: 0,
+          homeImage: '',
+          awayImage: '',
+          teamImageDim: 35
+        },
+        settings: {
+          bestOf: 5,
+          points: 25,
+          deciding: 15,
+          autoClose: true,
+          sound: true,
+          showTimeouts: true,
+          theme: 'arena',
+          room: 'main',
+          transparent: false
+        }
+      });
+
+      const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+      const safeImage = (value, maxLength) => {
+        const str = typeof value === 'string' ? value : '';
+        return str.length <= (maxLength || 2000000) ? str : '';
+      };
+
+      function normalize(raw) {
+        const base = defaultState();
+        if (!raw || typeof raw !== 'object') return base;
+        const s = Object.assign({}, base, raw);
+        s.names = Object.assign({}, base.names, raw.names || {});
+        s.titles = Object.assign({}, base.titles, raw.titles || {});
+        s.score = Object.assign({}, base.score, raw.score || {});
+        s.setsWon = Object.assign({}, base.setsWon, raw.setsWon || {});
+        s.timeouts = Object.assign({}, base.timeouts, raw.timeouts || {});
+        s.settings = Object.assign({}, base.settings, raw.settings || {});
+        s.sets = Array.isArray(raw.sets) ? raw.sets.filter((x) => x && Number.isFinite(Number(x.a)) && Number.isFinite(Number(x.b))).map((x) => ({ a: Number(x.a), b: Number(x.b) })) : [];
+        s.settings.bestOf = [1, 3, 5].includes(Number(s.settings.bestOf)) ? Number(s.settings.bestOf) : 5;
+        s.settings.points = [11, 15, 21, 25].includes(Number(s.settings.points)) ? Number(s.settings.points) : 25;
+        s.settings.deciding = [11, 15, 21].includes(Number(s.settings.deciding)) ? Number(s.settings.deciding) : 15;
+        s.settings.room = String(s.settings.room || 'main').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40) || 'main';
+        s.settings.theme = ['arena', 'kts', 'dark', 'blue'].includes(s.settings.theme) ? s.settings.theme : 'arena';
+        s.settings.autoClose = s.settings.autoClose !== false;
+        s.settings.sound = s.settings.sound !== false;
+        s.settings.showTimeouts = s.settings.showTimeouts !== false;
+        s.settings.transparent = Boolean(s.settings.transparent);
+        s.design = Object.assign({}, base.design, raw.design || {});
+        s.design.font = FONT_KEYS.includes(s.design.font) ? s.design.font : base.design.font;
+        s.design.layout = LAYOUT_KEYS.includes(s.design.layout) ? s.design.layout : base.design.layout;
+        SCALE_KEYS.forEach((key) => {
+          s.design[key] = clamp(Math.round(Number(s.design[key]) || 100), 50, 150);
+        });
+        COLOR_KEYS.forEach((key) => {
+          s.design[key] = /^#[0-9a-fA-F]{6}$/.test(String(s.design[key] || '')) ? s.design[key] : base.design[key];
+        });
+        s.design.kts = Object.assign({}, KTS_PALETTE, (raw.design && raw.design.kts) || {});
+        COLOR_KEYS.forEach((key) => {
+          s.design.kts[key] = /^#[0-9a-fA-F]{6}$/.test(String(s.design.kts[key] || '')) ? s.design.kts[key] : KTS_PALETTE[key];
+        });
+        s.design.ktsFont = FONT_KEYS.includes(s.design.ktsFont) ? s.design.ktsFont : KTS_FONT;
+        s.design.youtube = Object.assign({}, YT_PALETTE, (raw.design && raw.design.youtube) || {});
+        COLOR_KEYS.forEach((key) => {
+          s.design.youtube[key] = /^#[0-9a-fA-F]{6}$/.test(String(s.design.youtube[key] || '')) ? s.design.youtube[key] : YT_PALETTE[key];
+        });
+        s.design.youtubeFont = FONT_KEYS.includes(s.design.youtubeFont) ? s.design.youtubeFont : YT_FONT;
+        s.design.ytsets = Object.assign({}, SETS_PALETTE, (raw.design && raw.design.ytsets) || {});
+        COLOR_KEYS.forEach((key) => {
+          s.design.ytsets[key] = /^#[0-9a-fA-F]{6}$/.test(String(s.design.ytsets[key] || '')) ? s.design.ytsets[key] : SETS_PALETTE[key];
+        });
+        s.design.ytsetsFont = FONT_KEYS.includes(s.design.ytsetsFont) ? s.design.ytsetsFont : SETS_FONT;
+        s.design.logo = typeof s.design.logo === 'string' && s.design.logo.length <= 400000 ? s.design.logo : '';
+        s.design.logoHeight = clamp(Math.round(Number(s.design.logoHeight) || 64), 16, 200);
+        s.design.logoPos = s.design.logoPos === 'right' ? 'right' : 'left';
+        s.design.teamLogoA = typeof s.design.teamLogoA === 'string' && s.design.teamLogoA.length <= 400000 ? s.design.teamLogoA : '';
+        s.design.teamLogoB = typeof s.design.teamLogoB === 'string' && s.design.teamLogoB.length <= 400000 ? s.design.teamLogoB : '';
+        s.design.teamLogoHeight = clamp(Math.round(Number(s.design.teamLogoHeight) || 56), 16, 160);
+        s.design.bgImage = safeImage(s.design.bgImage, 2400000);
+        s.design.homeImage = safeImage(s.design.homeImage, 1200000);
+        s.design.awayImage = safeImage(s.design.awayImage, 1200000);
+        s.design.bgFit = ['cover', 'contain', 'stretch', 'repeat'].includes(s.design.bgFit) ? s.design.bgFit : 'cover';
+        s.design.bgDim = clamp(Math.round(Number(s.design.bgDim) || 0), 0, 90);
+        s.design.bgBlur = clamp(Math.round(Number(s.design.bgBlur) || 0), 0, 30);
+        s.design.teamImageDim = clamp(Math.round(Number(s.design.teamImageDim) || 0), 0, 90);
+        ['A', 'B'].forEach((t) => {
+          s.score[t] = clamp(Math.round(Number(s.score[t]) || 0), 0, 99);
+          s.setsWon[t] = clamp(Math.round(Number(s.setsWon[t]) || 0), 0, Math.ceil(s.settings.bestOf / 2));
+          s.timeouts[t] = clamp(Math.round(Number(s.timeouts[t]) || 0), 0, MAX_TIMEOUTS);
+          s.names[t] = String(s.names[t] || '').slice(0, 30).toUpperCase() || (t === 'A' ? 'КОМАНДА А' : 'КОМАНДА Б');
+        });
+        s.titles.match = String(s.titles.match || '').slice(0, 40) || 'ВОЛЕЙБОЛ';
+        s.setNumber = clamp(Math.round(Number(s.setNumber) || 1), 1, s.settings.bestOf);
+        s.rev = Math.max(0, Math.round(Number(s.rev) || 0));
+        s.matchOver = Boolean(s.matchOver);
+        if (s.serve !== 'A' && s.serve !== 'B') s.serve = null;
+        return s;
+      }
+
+      function lsKeyFor(r) {
+        return LS_KEY + ':' + r;
+      }
+
+      function readLegacy() {
+        try {
+          const raw = localStorage.getItem(LS_KEY);
+          return raw ? normalize(JSON.parse(raw)) : null;
+        } catch {
+          return null;
+        }
+      }
+
+      function loadLocal(r) {
+        try {
+          const raw = localStorage.getItem(lsKeyFor(r));
+          if (raw) return normalize(JSON.parse(raw));
+          const legacy = readLegacy();
+          if (legacy && legacy.settings.room === r) return legacy;
+        } catch { /* ignore */ }
+        return defaultState();
+      }
+
+      const roomFromUrl = (params.get('room') || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40);
+      const legacyState = readLegacy();
+      let room = roomFromUrl || (legacyState && legacyState.settings.room) || 'main';
+      let state = loadLocal(room);
+      const themeParam = params.get('theme');
+      if (['arena', 'kts', 'dark', 'blue'].includes(themeParam)) state.settings.theme = themeParam;
+      state.settings.room = room;
+
+      const undoStack = [];
+      let lastScores = { A: null, B: null };
+      let audioCtx = null;
+      let pendingLogo = '';
+      const pendingTeamLogo = { A: '', B: '' };
+      let pendingBgImage = '';
+      let pendingHomeImage = '';
+      let pendingAwayImage = '';
+      let lanIp = '';
+
+      const ui = {
+        body: document.body,
+        name: { A: $('#nameA'), B: $('#nameB') },
+        scoreEl: { A: $('#scoreA'), B: $('#scoreB') },
+        scoreBox: { A: $('#scoreBoxA'), B: $('#scoreBoxB') },
+        setsWon: { A: $('#midSetsWonA'), B: $('#midSetsWonB') },
+        timeoutEl: { A: $('#midToA'), B: $('#midToB') },
+        serve: { A: $('#serveA'), B: $('#serveB') },
+        mid: $('.box-arena-mid'),
+        kts: null,
+        matchTitle: $('#matchTitle'),
+        setMeta: $('#setMeta'),
+        liveBadge: $('#liveBadge'),
+        setsRow: $('#midSetsRow'),
+        titleBox: $('.box-title'),
+        logo: $('#logoImg'),
+        logoPreview: $('#logoPreview'),
+        teamLogo: { A: $('#teamLogoA'), B: $('#teamLogoB') },
+        teamLogoPreview: { A: $('#teamLogoAPreview'), B: $('#teamLogoBPreview') },
+        bgLayer: $('#bgLayer'),
+        bgShade: $('#bgShade'),
+        bgImagePreview: $('#bgImagePreview'),
+        homeImagePreview: $('#homeImagePreview'),
+        awayImagePreview: $('#awayImagePreview'),
+        winnerBadge: $('#winnerBadge'),
+        winnerName: $('#winnerName'),
+        syncPill: $('#syncPill'),
+        syncText: $('#syncText'),
+        soundBtn: $('#soundBtn'),
+        toast: $('#toast'),
+        settingsOverlay: $('#settingsOverlay'),
+        settingsForm: $('#settingsForm'),
+        boardLinkText: $('#boardLinkText'),
+        remoteLinkText: $('#remoteLinkText'),
+        obsFull: $('#obsFull'),
+        obsBug: $('#obsBug')
+      };
+
+      /* ---------- Сохранение ---------- */
+      function persist() {
+        try { localStorage.setItem(lsKeyFor(room), JSON.stringify(state)); } catch { /* ignore */ }
+      }
+
+      /* ---------- Синхронизация ---------- */
+      const sync = {
+        ws: null,
+        connected: false,
+        peers: 0,
+        retry: 0,
+        timer: null,
+        clientId: Math.random().toString(36).slice(2, 10),
+        connect() {
+          this.close();
+          const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+          const url = proto + '//' + location.host + '/ws?room=' + encodeURIComponent(room);
+          let ws;
+          try { ws = new WebSocket(url); } catch { this.setStatus(false); return; }
+          this.ws = ws;
+          ws.onopen = () => {
+            this.connected = true;
+            this.retry = 0;
+            this.setStatus(true);
+            ws.send(JSON.stringify({ type: 'hello', room, clientId: this.clientId }));
+          };
+          ws.onmessage = (event) => {
+            let msg;
+            try { msg = JSON.parse(event.data); } catch { return; }
+            if (msg.type === 'state' && msg.state) {
+              const remote = normalize(msg.state);
+              if (remote.rev > state.rev) {
+                state = remote;
+                state.settings.room = room;
+                persist();
+                render();
+              } else if (state.rev > remote.rev) {
+                this.sendState();
+              } else if (JSON.stringify(remote) !== JSON.stringify(state)) {
+                state = remote;
+                state.settings.room = room;
+                persist();
+                render();
+              }
+            }
+            if (msg.type === 'need-state') {
+              this.sendState();
+            }
+            if (msg.type === 'presence') {
+              this.peers = Number(msg.count) || 0;
+              this.setStatus(true);
+            }
+          };
+          ws.onclose = () => {
+            this.connected = false;
+            this.setStatus(false);
+            this.scheduleReconnect();
+          };
+          ws.onerror = () => { try { ws.close(); } catch { /* ignore */ } };
+        },
+        scheduleReconnect() {
+          clearTimeout(this.timer);
+          const delay = Math.min(10000, 1000 * Math.pow(2, this.retry++));
+          this.timer = setTimeout(() => this.connect(), delay);
+        },
+        close() {
+          clearTimeout(this.timer);
+          if (this.ws) {
+            try { this.ws.onclose = null; this.ws.close(); } catch { /* ignore */ }
+            this.ws = null;
+          }
+        },
+        sendState() {
+          if (!this.ws || this.ws.readyState !== 1) return;
+          try {
+            this.ws.send(JSON.stringify({ type: 'state', room, clientId: this.clientId, state }));
+          } catch { /* ignore */ }
+        },
+        setStatus(online) {
+          ui.syncPill.classList.toggle('online', online);
+          ui.syncPill.classList.toggle('offline', !online);
+          ui.syncText.textContent = online ? (this.peers > 1 ? 'онлайн · ' + this.peers : 'онлайн') : 'офлайн';
+        }
+      };
+
+      /* ---------- Звук ---------- */
+      function ensureAudio() {
+        if (!audioCtx) {
+          const Ctx = window.AudioContext || window.webkitAudioContext;
+          if (Ctx) audioCtx = new Ctx();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      }
+
+      function tone(freq, duration, type, gain, delay) {
+        if (!state.settings.sound) return;
+        ensureAudio();
+        if (!audioCtx) return;
+        const t0 = audioCtx.currentTime + (delay || 0);
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.type = type || 'sine';
+        osc.frequency.setValueAtTime(freq, t0);
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(gain || 0.09, t0 + 0.012);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+        osc.connect(g).connect(audioCtx.destination);
+        osc.start(t0);
+        osc.stop(t0 + duration + 0.04);
+      }
+
+      function playSound(kind) {
+        if (!state.settings.sound) return;
+        if (kind === 'point') { tone(640, 0.07, 'square', 0.05); }
+        else if (kind === 'minus') { tone(320, 0.08, 'triangle', 0.05); }
+        else if (kind === 'timeout') { tone(360, 0.2, 'triangle', 0.08); tone(280, 0.22, 'triangle', 0.07, 0.18); }
+        else if (kind === 'set') { tone(523, 0.12, 'sine', 0.1); tone(659, 0.12, 'sine', 0.1, 0.13); tone(784, 0.18, 'sine', 0.1, 0.26); }
+        else if (kind === 'match') { [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.16, 'square', 0.07, i * 0.15)); }
+        else if (kind === 'undo') { tone(420, 0.08, 'sine', 0.06); tone(300, 0.1, 'sine', 0.05, 0.08); }
+        else if (kind === 'serve') { tone(720, 0.05, 'sine', 0.04); }
+      }
+
+      /* ---------- Логика ---------- */
+      const need = () => Math.ceil(state.settings.bestOf / 2);
+      const isDeciding = () => state.settings.bestOf > 1 && state.setNumber >= state.settings.bestOf;
+      const targetPoints = () => isDeciding() ? state.settings.deciding : state.settings.points;
+
+      function bump(el) {
+        if (!el) return;
+        el.classList.remove('bump');
+        void el.offsetWidth;
+        el.classList.add('bump');
+      }
+
+      function commit(mutator) {
+        if (DISPLAY) return null;
+        const before = clone(state);
+        const soundKind = mutator(state) || null;
+        state.rev = Math.max(Date.now(), state.rev + 1);
+        state.settings.room = room;
+        undoStack.push(before);
+        if (undoStack.length > 120) undoStack.shift();
+        persist();
+        render();
+        sync.sendState();
+        if (soundKind) playSound(soundKind);
+        return soundKind;
+      }
+
+      function finishSet(s, winner) {
+        s.sets.push({ a: s.score.A, b: s.score.B });
+        s.setsWon[winner] = Math.min(need(), s.setsWon[winner] + 1);
+        s.score = { A: 0, B: 0 };
+        s.timeouts = { A: MAX_TIMEOUTS, B: MAX_TIMEOUTS };
+        s.serve = winner;
+        if (s.setsWon[winner] >= need()) {
+          s.matchOver = true;
+          s.setNumber = Math.max(1, s.sets.length);
+        } else {
+          s.setNumber = Math.min(s.settings.bestOf, s.setNumber + 1);
+        }
+      }
+
+      function addPoint(team) {
+        if (state.matchOver) return;
+        let sound = 'point';
+        commit((s) => {
+          s.score[team] = Math.min(99, s.score[team] + 1);
+          s.serve = team;
+          const mine = s.score[team];
+          const theirs = s.score[team === 'A' ? 'B' : 'A'];
+          const target = s.settings.bestOf > 1 && s.setNumber >= s.settings.bestOf ? s.settings.deciding : s.settings.points;
+          if (s.settings.autoClose && mine >= target && mine - theirs >= 2) {
+            finishSet(s, team);
+            sound = s.matchOver ? 'match' : 'set';
+          }
+          return sound;
+        });
+      }
+
+      function removePoint(team) {
+        if (state.matchOver) return;
+        if (state.score[team] <= 0) return;
+        commit((s) => {
+          s.score[team] = Math.max(0, s.score[team] - 1);
+          return 'minus';
+        });
+      }
+
+      function timeout(team) {
+        if (state.matchOver) return;
+        if (state.timeouts[team] <= 0) { showToast('Тайм-ауты закончились'); return; }
+        commit((s) => {
+          s.timeouts[team] = Math.max(0, s.timeouts[team] - 1);
+          return 'timeout';
+        });
+      }
+
+      function toggleServe(team) {
+        if (state.matchOver) return;
+        commit((s) => {
+          s.serve = s.serve === team ? null : team;
+          return 'serve';
+        });
+      }
+
+      function endSetManual() {
+        if (state.matchOver) { showToast('Матч завершён — нажмите «Новый матч»'); return; }
+        const a = state.score.A;
+        const b = state.score.B;
+        if (a === b) { showToast('Счёт равный — партию завершить нельзя'); return; }
+        commit((s) => {
+          finishSet(s, a > b ? 'A' : 'B');
+          return s.matchOver ? 'match' : 'set';
+        });
+      }
+
+      function resetSet() {
+        if (state.matchOver) { showToast('Матч завершён — нажмите «Новый матч»'); return; }
+        commit((s) => {
+          s.score = { A: 0, B: 0 };
+          s.timeouts = { A: MAX_TIMEOUTS, B: MAX_TIMEOUTS };
+          return 'undo';
+        });
+      }
+
+      function newMatch() {
+        if (!confirm('Начать новый матч? Текущий счёт и партии будут сброшены.')) return;
+        commit((s) => {
+          s.score = { A: 0, B: 0 };
+          s.setsWon = { A: 0, B: 0 };
+          s.sets = [];
+          s.setNumber = 1;
+          s.serve = null;
+          s.timeouts = { A: MAX_TIMEOUTS, B: MAX_TIMEOUTS };
+          s.matchOver = false;
+          return 'undo';
+        });
+      }
+
+      function undo() {
+        if (!undoStack.length) return;
+        const prev = undoStack.pop();
+        state = normalize(prev);
+        state.rev = Math.max(Date.now(), state.rev + 1);
+        state.settings.room = room;
+        persist();
+        render();
+        sync.sendState();
+        playSound('undo');
+      }
+
+      /* ---------- Отрисовка ---------- */
+      function applyStatsBlock() {
+        if (params.get('stats') !== 'block') return;
+        const heading = $('.box-arena-heading');
+        const pair = heading ? heading.querySelector('.mid-pair') : null;
+        const stats = $('.box-arena-mid .mid-stats');
+        if (pair && stats) stats.prepend(pair);
+        if (heading) heading.remove();
+        ui.body.classList.add('stats-block');
+      }
+
+      function applyBottomBar() {
+        if (ui.kts) return;
+        const arena = $('.arena');
+        if (!arena || !ui.setsRow) return;
+        const bottom = document.createElement('div');
+        bottom.className = 'box-bottom-bar';
+        const build = (team, side) => {
+          const wrap = document.createElement('div');
+          wrap.className = 'box-arena-counters box-arena-counters-' + side;
+          wrap.classList.toggle('hide-timeouts', !state.settings.showTimeouts);
+          const sets = document.createElement('div');
+          sets.className = 'box-arena-counter counter-sets';
+          sets.innerHTML = '<span class="el-arena-counter-value" id="ktsSets' + team + '">' + state.setsWon[team] + '</span>' +
+            '<span class="el-arena-counter-label">SETS<br>WON</span>';
+          const to = document.createElement('div');
+          to.className = 'box-arena-counter counter-timeouts';
+          to.innerHTML = '<span class="el-arena-counter-value" id="ktsTo' + team + '" data-team="' + team +
+            '" title="Тайм-аут: нажмите, чтобы потратить">' + state.timeouts[team] + '</span>' +
+            '<span class="el-arena-counter-label">TIME<br>OUTS</span>';
+          wrap.append(sets, to);
+          bottom.append(wrap);
+          return wrap;
+        };
+        const home = build('A', 'home');
+        bottom.append(ui.setsRow);
+        const away = build('B', 'away');
+        arena.append(bottom);
+        ui.kts = {
+          bottom: bottom,
+          wrap: { A: home, B: away },
+          sets: { A: home.querySelector('#ktsSetsA'), B: away.querySelector('#ktsSetsB') },
+          to: { A: home.querySelector('#ktsToA'), B: away.querySelector('#ktsToB') }
+        };
+        ['A', 'B'].forEach((team) => {
+          ui.kts.to[team].addEventListener('click', () => timeout(team));
+        });
+      }
+
+      function revertBottomBar() {
+        if (!ui.kts) return;
+        const mid = $('.box-arena-mid');
+        if (mid && ui.setsRow) mid.appendChild(ui.setsRow);
+        ui.kts.bottom.remove();
+        ui.kts = null;
+      }
+
+      function isKtsLayout(layoutValue) {
+        return !YT_STYLE && !SETS_STYLE &&
+          (KTS_STYLE || (layoutValue === 'kts' && params.get('stats') !== 'block'));
+      }
+
+      function isYoutubeLayout(layoutValue) {
+        return !KTS_STYLE && !SETS_STYLE &&
+          (YT_STYLE || (layoutValue === 'youtube' && params.get('stats') !== 'block'));
+      }
+
+      function isSetsLayout(layoutValue) {
+        return !KTS_STYLE && !YT_STYLE &&
+          (SETS_STYLE || (layoutValue === 'ytsets' && params.get('stats') !== 'block'));
+      }
+
+      // Палитра и шрифт, которые сейчас редактируются: у третьего, четвёртого и пятого табло — свои.
+      function paletteFor(layoutValue) {
+        if (isKtsLayout(layoutValue)) {
+          return { kind: 'kts', palette: state.design.kts || KTS_PALETTE, font: state.design.ktsFont || KTS_FONT };
+        }
+        if (isYoutubeLayout(layoutValue)) {
+          return { kind: 'youtube', palette: state.design.youtube || YT_PALETTE, font: state.design.youtubeFont || YT_FONT };
+        }
+        if (isSetsLayout(layoutValue)) {
+          return { kind: 'ytsets', palette: state.design.ytsets || SETS_PALETTE, font: state.design.ytsetsFont || SETS_FONT };
+        }
+        return { kind: 'design', palette: state.design, font: state.design.font };
+      }
+
+      function applyDesign() {
+        const d = state.design;
+        const kts = isKtsLayout(d.layout);
+        const yt = isYoutubeLayout(d.layout);
+        const sets = isSetsLayout(d.layout);
+        if (kts || yt || sets) applyBottomBar();
+        else revertBottomBar();
+        ui.body.classList.toggle('style-kts', kts);
+        ui.body.classList.toggle('style-youtube', yt);
+        ui.body.classList.toggle('style-ytsets', sets);
+        ui.body.dataset.layout = (kts || yt || sets) ? 'arena' : (LAYOUT_KEYS.includes(d.layout) ? d.layout : 'arena');
+        const arenaEl = $('.arena');
+        if (arenaEl) arenaEl.style.setProperty('--set-cols', String(state.settings.bestOf));
+        SCALE_KEYS.forEach((key) => {
+          const [min, max] = SCALE_LIMITS[key];
+          const value = clamp(Number(d[key]) || 100, min, max);
+          ui.body.style.setProperty(SCALE_VARS[key], String(value / 100));
+        });
+        const active = paletteFor(d.layout);
+        const palette = active.palette;
+        const font = active.font;
+        ui.body.style.setProperty('--font-family', FONTS[font] || FONTS.bebas);
+        ui.body.style.setProperty('--bg', palette.bg);
+        ui.body.style.setProperty('--title-bg', palette.titleBg);
+        ui.body.style.setProperty('--text', palette.text);
+        ui.body.style.setProperty('--home-bg', palette.homeBg);
+        ui.body.style.setProperty('--home-fg', palette.homeFg);
+        ui.body.style.setProperty('--away-bg', palette.awayBg);
+        ui.body.style.setProperty('--away-fg', palette.awayFg);
+        if (ui.liveBadge) ui.liveBadge.hidden = !(yt || sets);
+        ui.body.style.setProperty('--logo-height', d.logoHeight + 'px');
+        ui.body.style.setProperty('--team-logo-height', d.teamLogoHeight + 'px');
+
+        const hasBg = Boolean(d.bgImage);
+        ui.bgLayer.hidden = !hasBg;
+        if (hasBg) {
+          ui.bgLayer.style.backgroundImage = 'url("' + d.bgImage + '")';
+          ui.bgLayer.style.backgroundSize = d.bgFit === 'stretch' ? '100% 100%' : (d.bgFit === 'repeat' ? 'auto' : d.bgFit);
+          ui.bgLayer.style.backgroundRepeat = d.bgFit === 'repeat' ? 'repeat' : 'no-repeat';
+          ui.bgLayer.style.filter = d.bgBlur > 0 ? 'blur(' + d.bgBlur + 'px)' : 'none';
+          ui.bgLayer.style.transform = d.bgBlur > 0 ? 'scale(1.06)' : 'scale(1.02)';
+        }
+        ui.bgShade.hidden = !hasBg || d.bgDim <= 0;
+        if (hasBg) ui.bgShade.style.background = 'rgba(0, 0, 0, ' + (d.bgDim / 100) + ')';
+
+        const teamImages = { A: d.homeImage, B: d.awayImage };
+        ['A', 'B'].forEach((team) => {
+          const src = teamImages[team];
+          const has = Boolean(src);
+          const prefix = team === 'A' ? 'home' : 'away';
+          ui.body.style.setProperty('--' + prefix + '-image', has ? 'url("' + src + '")' : 'none');
+          ui.body.style.setProperty('--' + prefix + '-image-dim', String(has ? d.teamImageDim / 100 : 0));
+        });
+
+        ['A', 'B'].forEach((team) => {
+          const src = team === 'A' ? d.teamLogoA : d.teamLogoB;
+          const img = ui.teamLogo[team];
+          const has = Boolean(src);
+          img.hidden = !has;
+          if (has && img.getAttribute('src') !== src) img.src = src;
+        });
+
+        const hasLogo = Boolean(d.logo);
+        ui.logo.hidden = !hasLogo;
+        if (hasLogo && ui.logo.getAttribute('src') !== d.logo) ui.logo.src = d.logo;
+        ui.logo.classList.toggle('pos-left', d.logoPos !== 'right');
+        ui.logo.classList.toggle('pos-right', d.logoPos === 'right');
+        ui.titleBox.classList.toggle('has-logo', hasLogo);
+        ui.titleBox.classList.toggle('pos-left', d.logoPos !== 'right');
+        ui.titleBox.classList.toggle('pos-right', d.logoPos === 'right');
+        requestFit();
+      }
+
+      function render() {
+        ui.body.dataset.theme = state.settings.theme;
+        applyDesign();
+        const transparent = params.get('bg') === 'transparent' || (DISPLAY && params.get('bg') !== 'opaque');
+        ui.body.classList.toggle('transparent', transparent);
+        ui.body.classList.toggle('display', DISPLAY);
+
+        ui.matchTitle.textContent = state.titles.match;
+
+        ['A', 'B'].forEach((t) => {
+          if (document.activeElement !== ui.name[t]) ui.name[t].textContent = state.names[t];
+          ui.scoreEl[t].textContent = state.score[t];
+          ui.setsWon[t].textContent = state.setsWon[t];
+          ui.timeoutEl[t].textContent = state.timeouts[t];
+          if (ui.kts) {
+            ui.kts.sets[t].textContent = state.setsWon[t];
+            ui.kts.to[t].textContent = state.timeouts[t];
+          }
+          ui.serve[t].classList.toggle('on', state.serve === t);
+          if (lastScores[t] !== null && lastScores[t] !== state.score[t]) bump(ui.scoreEl[t]);
+          lastScores[t] = state.score[t];
+        });
+        ui.mid.classList.toggle('hide-timeouts', !state.settings.showTimeouts);
+        if (ui.kts) {
+          ['A', 'B'].forEach((t) => {
+            ui.kts.wrap[t].classList.toggle('hide-timeouts', !state.settings.showTimeouts);
+          });
+        }
+
+        const target = targetPoints();
+        ui.setMeta.textContent = 'ПАРТИЯ ' + state.setNumber + ' · ДО ' + target;
+
+        const winner = state.matchOver ? (state.setsWon.A >= need() ? 'A' : (state.setsWon.B >= need() ? 'B' : null)) : null;
+        ui.winnerBadge.hidden = !winner;
+        if (winner) ui.winnerName.textContent = state.names[winner] + ' — победа';
+        ui.body.classList.toggle('match-over', Boolean(winner));
+
+        renderSets();
+        renderControls();
+        ui.soundBtn.textContent = state.settings.sound ? '🔊' : '🔇';
+        requestFit();
+      }
+
+      function requestFit() {
+        fitNameText();
+        fitScoreText();
+        fitMidText();
+      }
+
+      function fitNameText() {
+        const MIN_FIT = 0.26;
+        let commonFit = 1;
+        ['A', 'B'].forEach((team) => {
+          const el = ui.name[team];
+          el.style.setProperty('--name-fit', '1');
+          const available = el.clientWidth;
+          const width = el.scrollWidth;
+          if (!available || !width) return;
+          if (width <= available) return;
+          let fit = Math.max(MIN_FIT, (available / width) * 0.98);
+          el.style.setProperty('--name-fit', String(fit));
+          let guard = 0;
+          while (el.scrollWidth > el.clientWidth + 1 && fit > MIN_FIT && guard < 48) {
+            fit = Math.max(MIN_FIT, fit * 0.97);
+            el.style.setProperty('--name-fit', String(fit));
+            guard += 1;
+          }
+          commonFit = Math.min(commonFit, fit);
+        });
+        // Одинаковый размер у обеих команд: плашки названий выглядят ровно.
+        ['A', 'B'].forEach((team) => {
+          ui.name[team].style.setProperty('--name-fit', String(commonFit));
+        });
+      }
+
+      function fitScoreText() {
+        ['A', 'B'].forEach((team) => {
+          const el = ui.scoreEl[team];
+          const box = ui.scoreBox[team];
+          el.style.setProperty('--score-fit', '1');
+          const width = el.offsetWidth;
+          const height = el.offsetHeight;
+          if (!width || !height) return;
+          const availableWidth = box.clientWidth - 6;
+          const availableHeight = box.clientHeight - 6;
+          let ratio = 1;
+          if (availableWidth > 0 && width > availableWidth) ratio = Math.min(ratio, availableWidth / width);
+          if (availableHeight > 0 && height > availableHeight) ratio = Math.min(ratio, availableHeight / height);
+          if (ratio < 0.995) el.style.setProperty('--score-fit', String(Math.max(0.3, ratio)));
+        });
+      }
+
+      function fitMidText() {
+        const el = ui.mid;
+        if (!el) return;
+        const host = el.closest('.arena') || el;
+        const MIN_FIT = 0.6;
+        host.style.setProperty('--mid-fit', '1');
+        const availableW = host.clientWidth;
+        const availableH = host.clientHeight;
+        if (!availableW || !availableH) return;
+        const pairs = Array.from(host.querySelectorAll('.mid-pair'));
+        // Блок теперь однострочный: следим и за высотой, и за шириной.
+        const overflow = () => {
+          if (el.scrollHeight > el.clientHeight + 1) return true;
+          return pairs.some((pair) => pair.scrollWidth > pair.clientWidth + 1);
+        };
+        if (!overflow()) return;
+        let fit = 1;
+        if (el.scrollHeight > el.clientHeight + 1) {
+          fit = Math.min(fit, (el.clientHeight / el.scrollHeight) * 0.98);
+        }
+        pairs.forEach((pair) => {
+          if (pair.scrollWidth > pair.clientWidth + 1) {
+            fit = Math.min(fit, (pair.clientWidth / pair.scrollWidth) * 0.98);
+          }
+        });
+        fit = Math.max(MIN_FIT, fit);
+        host.style.setProperty('--mid-fit', String(fit));
+        let guard = 0;
+        while (overflow() && fit > MIN_FIT && guard < 80) {
+          fit = Math.max(MIN_FIT, fit * 0.97);
+          host.style.setProperty('--mid-fit', String(fit));
+          guard += 1;
+        }
+      }
+
+      window.addEventListener('resize', requestFit);
+      window.addEventListener('orientationchange', requestFit);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(requestFit).catch(() => null);
+
+      function renderSetsInto(row) {
+        row.replaceChildren();
+        const total = state.settings.bestOf;
+        state.sets.forEach((set) => {
+          const el = document.createElement('div');
+          el.className = 'box-arena-set';
+          el.innerHTML = '<span class="el-arena-set-score ' + (set.a > set.b ? 'winner' : '') + '">' + set.a +
+            '</span><span class="el-arena-set-sep">-</span><span class="el-arena-set-score ' + (set.b > set.a ? 'winner' : '') + '">' + set.b + '</span>';
+          row.appendChild(el);
+        });
+        if (!state.matchOver) {
+          const cur = document.createElement('div');
+          cur.className = 'box-arena-set current';
+          cur.innerHTML = '<span class="el-arena-set-score ' + (state.score.A > state.score.B ? 'winner' : '') + '">' + state.score.A +
+            '</span><span class="el-arena-set-sep">-</span><span class="el-arena-set-score ' + (state.score.B > state.score.A ? 'winner' : '') + '">' + state.score.B + '</span>';
+          row.appendChild(cur);
+        }
+        const played = state.sets.length + (state.matchOver ? 0 : 1);
+        for (let i = played; i < total; i += 1) {
+          const empty = document.createElement('div');
+          empty.className = 'box-arena-set unplayed';
+          empty.innerHTML = '<span class="el-arena-set-empty">-</span>';
+          row.appendChild(empty);
+        }
+      }
+
+      function renderSets() {
+        renderSetsInto(ui.setsRow);
+      }
+
+      function renderControls() {
+        const frozen = state.matchOver || DISPLAY;
+        ['A', 'B'].forEach((t) => {
+          ui.scoreBox[t].style.cursor = frozen ? 'default' : 'pointer';
+        });
+        const overHint = state.matchOver ? 'Матч завершён — нажмите «Новый матч»' : '';
+        $$('.controls .ctrl').forEach((btn) => {
+          if (btn.id === 'undo') {
+            btn.disabled = undoStack.length === 0;
+            return;
+          }
+          if (btn.id === 'endSet' || btn.id === 'resetSet' || btn.id === 'newMatch') btn.disabled = DISPLAY;
+          else btn.disabled = frozen;
+          if (btn.id === 'resetSet') btn.title = overHint || 'Сбросить очки текущей партии (R)';
+          else if (btn.id === 'endSet') btn.title = overHint || 'Завершить текущую партию (S)';
+          else if (btn.id === 'newMatch') btn.title = 'Новый матч (N)';
+        });
+        ['A', 'B'].forEach((t) => {
+          ui.timeoutEl[t].style.cursor = frozen || state.timeouts[t] <= 0 ? 'default' : 'pointer';
+          if (ui.kts) ui.kts.to[t].style.cursor = frozen || state.timeouts[t] <= 0 ? 'default' : 'pointer';
+        });
+      }
+
+      let toastTimer = null;
+      function showToast(text) {
+        ui.toast.textContent = text;
+        ui.toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => ui.toast.classList.remove('show'), 2200);
+      }
+
+      /* ---------- Редактирование ---------- */
+      function bindName(el, team) {
+        el.addEventListener('input', () => {
+          state.names[team] = el.textContent.replace(/\s+/g, ' ').trim().toUpperCase().slice(0, 30) || (team === 'A' ? 'КОМАНДА А' : 'КОМАНДА Б');
+          state.rev = Math.max(Date.now(), state.rev + 1);
+          persist();
+          sync.sendState();
+          requestFit();
+        });
+        el.addEventListener('blur', () => {
+          el.textContent = state.names[team];
+          render();
+        });
+        el.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+        });
+      }
+      bindName(ui.name.A, 'A');
+      bindName(ui.name.B, 'B');
+
+      [['match', ui.matchTitle]].forEach(([key, el]) => {
+        el.addEventListener('input', () => {
+          state.titles[key] = el.textContent.replace(/\s+/g, ' ').trim().slice(0, 40);
+          state.rev = Math.max(Date.now(), state.rev + 1);
+          persist();
+          sync.sendState();
+        });
+        el.addEventListener('blur', () => { el.textContent = state.titles[key]; });
+        el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
+      });
+
+      /* ---------- События ---------- */
+      ui.scoreBox.A.addEventListener('click', (e) => { if (e.shiftKey || e.altKey) removePoint('A'); else addPoint('A'); });
+      ui.scoreBox.B.addEventListener('click', (e) => { if (e.shiftKey || e.altKey) removePoint('B'); else addPoint('B'); });
+      ui.scoreBox.A.addEventListener('contextmenu', (e) => { e.preventDefault(); removePoint('A'); });
+      ui.scoreBox.B.addEventListener('contextmenu', (e) => { e.preventDefault(); removePoint('B'); });
+
+      $('#plusA').addEventListener('click', () => addPoint('A'));
+      $('#minusA').addEventListener('click', () => removePoint('A'));
+      $('#plusB').addEventListener('click', () => addPoint('B'));
+      $('#minusB').addEventListener('click', () => removePoint('B'));
+      $('#toAbtn').addEventListener('click', () => timeout('A'));
+      $('#toBbtn').addEventListener('click', () => timeout('B'));
+      ui.timeoutEl.A.addEventListener('click', () => timeout('A'));
+      ui.timeoutEl.B.addEventListener('click', () => timeout('B'));
+      ui.serve.A.addEventListener('click', () => toggleServe('A'));
+      ui.serve.B.addEventListener('click', () => toggleServe('B'));
+      $('#endSet').addEventListener('click', endSetManual);
+      $('#resetSet').addEventListener('click', resetSet);
+      $('#undo').addEventListener('click', undo);
+      $('#newMatch').addEventListener('click', newMatch);
+
+      $('#soundBtn').addEventListener('click', () => {
+        state.settings.sound = !state.settings.sound;
+        state.rev = Math.max(Date.now(), state.rev + 1);
+        persist();
+        render();
+        sync.sendState();
+      });
+
+      $('#fsBtn').addEventListener('click', () => {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+        else document.exitFullscreen().catch(() => {});
+      });
+
+      function boardUrl(transparentBg) {
+        const url = new URL('board.html', location.href);
+        url.searchParams.set('room', room);
+        if (transparentBg) url.searchParams.set('bg', 'transparent');
+        return url.toString();
+      }
+
+      function remoteUrl() {
+        const port = location.port || '8787';
+        if (location.protocol === 'file:') {
+          return 'http://<IP-компьютера>:' + port + '/remote.html?room=' + encodeURIComponent(room);
+        }
+        const hostname = location.hostname;
+        const local = !hostname || hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
+        const base = local
+          ? (lanIp ? 'http://' + lanIp + ':' + port : 'http://<IP-компьютера>:' + port)
+          : location.origin;
+        return base + '/remote.html?room=' + encodeURIComponent(room);
+      }
+
+      $('#boardBtn').addEventListener('click', () => {
+        window.open(boardUrl(false), '_blank', 'noopener');
+      });
+
+      $('#remoteBtn').addEventListener('click', async () => {
+        let url = remoteUrl();
+        if (url.includes('<IP-компьютера>') && location.protocol !== 'file:') {
+          try {
+            const data = await fetch('/net').then((response) => response.json());
+            if (data && Array.isArray(data.ips) && data.ips.length) {
+              lanIp = String(data.ips[0] || '');
+              url = remoteUrl();
+            }
+          } catch { /* ignore */ }
+        }
+        if (url.includes('<IP-компьютера>')) {
+          showToast('Не удалось определить IP. Откройте /net или настройки ⚙');
+          return;
+        }
+        const phone = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || innerWidth <= 760;
+        if (phone) location.href = url;
+        else window.open(url, '_blank', 'noopener');
+      });
+
+      ui.syncPill.addEventListener('click', () => {
+        const full = boardUrl(true);
+        const bug = location.origin + '/overlay.html?room=' + encodeURIComponent(room);
+        const text = 'Комната: ' + room + '\nТабло: ' + boardUrl(false) + '\nПульт: ' + remoteUrl() + '\nOBS табло: ' + full + '\nOBS оверлей: ' + bug;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => showToast('Ссылки для OBS скопированы'), () => showToast(full));
+        } else {
+          showToast(full);
+        }
+      });
+
+      /* ---------- Настройки ---------- */
+      function openSettings() {
+        const f = ui.settingsForm;
+        f.elements.match.value = state.titles.match;
+        f.elements.room.value = room;
+        f.elements.teamA.value = state.names.A;
+        f.elements.teamB.value = state.names.B;
+        f.elements.bestOf.value = String(state.settings.bestOf);
+        f.elements.points.value = String(state.settings.points);
+        f.elements.deciding.value = String(state.settings.deciding);
+        f.elements.theme.value = state.settings.theme;
+        f.elements.layout.value = state.design.layout;
+        lastLayoutBeforeYoutube = state.design.layout === 'youtube' || !LAYOUT_KEYS.includes(state.design.layout)
+          ? 'arena'
+          : state.design.layout;
+        f.elements.youtube.checked = f.elements.layout.value === 'youtube';
+        SCALE_KEYS.forEach((key) => { f.elements[key].value = state.design[key]; });
+        syncScaleOutputs();
+        fillPaletteFields(f.elements.layout.value);
+        f.elements.logoHeight.value = state.design.logoHeight;
+        f.elements.logoPos.value = state.design.logoPos;
+        f.elements.logo.value = '';
+        pendingLogo = state.design.logo;
+        updateLogoPreview();
+        f.elements.teamLogoA.value = '';
+        f.elements.teamLogoB.value = '';
+        f.elements.teamLogoHeight.value = state.design.teamLogoHeight;
+        pendingTeamLogo.A = state.design.teamLogoA;
+        pendingTeamLogo.B = state.design.teamLogoB;
+        updateTeamLogoPreview('A');
+        updateTeamLogoPreview('B');
+        f.elements.bgImage.value = '';
+        f.elements.bgFit.value = state.design.bgFit;
+        f.elements.bgDim.value = state.design.bgDim;
+        f.elements.bgBlur.value = state.design.bgBlur;
+        f.elements.homeImage.value = '';
+        f.elements.awayImage.value = '';
+        f.elements.teamImageDim.value = state.design.teamImageDim;
+        pendingBgImage = state.design.bgImage;
+        pendingHomeImage = state.design.homeImage;
+        pendingAwayImage = state.design.awayImage;
+        updateImagePreview(ui.bgImagePreview, pendingBgImage);
+        updateImagePreview(ui.homeImagePreview, pendingHomeImage);
+        updateImagePreview(ui.awayImagePreview, pendingAwayImage);
+        f.elements.autoClose.checked = state.settings.autoClose;
+        f.elements.sound.checked = state.settings.sound;
+        f.elements.showTimeouts.checked = state.settings.showTimeouts;
+        ui.boardLinkText.textContent = boardUrl(false);
+        ui.remoteLinkText.textContent = remoteUrl();
+        ui.obsFull.textContent = boardUrl(true);
+        ui.obsBug.textContent = location.origin + '/overlay.html?room=' + room;
+        ui.settingsOverlay.hidden = false;
+        f.elements.match.focus();
+      }
+
+      function closeSettings() {
+        ui.settingsOverlay.hidden = true;
+        applyDesign();
+      }
+
+      function updateLogoPreview() {
+        const has = Boolean(pendingLogo);
+        ui.logoPreview.src = has ? pendingLogo : '';
+        ui.logoPreview.classList.toggle('on', has);
+      }
+
+      function updateTeamLogoPreview(team) {
+        const src = pendingTeamLogo[team];
+        const has = Boolean(src);
+        ui.teamLogoPreview[team].src = has ? src : '';
+        ui.teamLogoPreview[team].classList.toggle('on', has);
+      }
+
+      function updateImagePreview(img, src) {
+        const has = Boolean(src);
+        img.src = has ? src : '';
+        img.classList.toggle('on', has);
+      }
+
+      function syncScaleOutputs() {
+        SCALE_KEYS.forEach((key) => {
+          const input = ui.settingsForm.elements[key];
+          const output = document.querySelector('[data-scale-out="' + key + '"]');
+          if (input && output) output.textContent = input.value + '%';
+        });
+      }
+
+      function applyScalePreview() {
+        SCALE_KEYS.forEach((key) => {
+          const input = ui.settingsForm.elements[key];
+          if (input) ui.body.style.setProperty(SCALE_VARS[key], String(Number(input.value) / 100));
+        });
+        requestFit();
+      }
+
+      function updateFontPreview() {
+        const el = $('#fontPreview');
+        if (!el) return;
+        const value = ui.settingsForm.elements.font.value;
+        el.style.fontFamily = FONTS[value] || FONTS.bebas;
+      }
+
+      // Поля «Цвета» и «Шрифт» показывают палитру того табло, которое выбрано в форме.
+      function fillPaletteFields(layoutValue) {
+        const f = ui.settingsForm;
+        const active = paletteFor(layoutValue);
+        COLOR_KEYS.forEach((key) => { f.elements[key].value = active.palette[key]; });
+        f.elements.font.value = FONT_KEYS.includes(active.font) ? active.font : 'bebas';
+        updateFontPreview();
+      }
+
+      function fileToDataUrl(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || ''));
+          reader.onerror = () => reject(new Error('Не удалось прочитать файл'));
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function loadImage(dataUrl) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = () => reject(new Error('Не удалось открыть картинку'));
+          img.src = dataUrl;
+        });
+      }
+
+      async function compressImage(file, maxSide, maxChars) {
+        if (!file || !/^image\//.test(file.type)) throw new Error('Это не картинка');
+        if (file.size > 12 * 1024 * 1024) throw new Error('Файл больше 12 МБ');
+        const original = await fileToDataUrl(file);
+        if (file.type === 'image/svg+xml' && original.length <= maxChars) return original;
+        const img = await loadImage(original);
+        let width = img.naturalWidth || img.width;
+        let height = img.naturalHeight || img.height;
+        if (!width || !height) throw new Error('Пустая картинка');
+        const scale = Math.min(1, maxSide / Math.max(width, height));
+        let w = Math.max(1, Math.round(width * scale));
+        let h = Math.max(1, Math.round(height * scale));
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Браузер не может обработать картинку');
+        const qualities = [0.9, 0.8, 0.68, 0.55, 0.42];
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+          canvas.width = w;
+          canvas.height = h;
+          ctx.clearRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          for (const q of qualities) {
+            const data = canvas.toDataURL('image/webp', q);
+            if (data.length <= maxChars) return data;
+          }
+          w = Math.max(1, Math.round(w * 0.72));
+          h = Math.max(1, Math.round(h * 0.72));
+        }
+        throw new Error('Картинка слишком большая — попробуйте другую');
+      }
+
+      function pickImage(input, options) {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        input.value = '';
+        showToast('Обрабатываю картинку…');
+        compressImage(file, options.maxSide, options.maxChars)
+          .then((src) => {
+            options.done(src);
+            showToast('Картинка готова');
+          })
+          .catch((err) => showToast(err && err.message ? err.message : 'Не удалось загрузить картинку'));
+      }
+
+      ui.settingsForm.elements.theme.addEventListener('change', () => {
+        const palette = THEMES[ui.settingsForm.elements.theme.value];
+        if (!palette) return;
+        COLOR_KEYS.forEach((key) => { ui.settingsForm.elements[key].value = palette[key]; });
+      });
+
+      ui.settingsForm.elements.layout.addEventListener('change', () => {
+        const value = ui.settingsForm.elements.layout.value;
+        const kts = isKtsLayout(value);
+        const yt = isYoutubeLayout(value);
+        const sets = isSetsLayout(value);
+        if (kts || yt || sets) applyBottomBar();
+        else revertBottomBar();
+        ui.body.classList.toggle('style-kts', kts);
+        ui.body.classList.toggle('style-youtube', yt);
+        ui.body.classList.toggle('style-ytsets', sets);
+        ui.body.dataset.layout = (kts || yt || sets) ? 'arena' : (LAYOUT_KEYS.includes(value) ? value : 'arena');
+        const active = paletteFor(value);
+        const palette = active.palette;
+        const font = active.font;
+        ui.body.style.setProperty('--font-family', FONTS[font] || FONTS.bebas);
+        ui.body.style.setProperty('--bg', palette.bg);
+        ui.body.style.setProperty('--title-bg', palette.titleBg);
+        ui.body.style.setProperty('--text', palette.text);
+        ui.body.style.setProperty('--home-bg', palette.homeBg);
+        ui.body.style.setProperty('--home-fg', palette.homeFg);
+        ui.body.style.setProperty('--away-bg', palette.awayBg);
+        ui.body.style.setProperty('--away-fg', palette.awayFg);
+        if (ui.liveBadge) ui.liveBadge.hidden = !(yt || sets);
+        const ytBox = ui.settingsForm.elements.youtube;
+        if (ytBox) ytBox.checked = value === 'youtube';
+        fillPaletteFields(value);
+        requestFit();
+      });
+
+      let lastLayoutBeforeYoutube = 'arena';
+      ui.settingsForm.elements.youtube.addEventListener('change', () => {
+        const check = ui.settingsForm.elements.youtube;
+        const select = ui.settingsForm.elements.layout;
+        if (check.checked) {
+          if (select.value !== 'youtube') lastLayoutBeforeYoutube = select.value;
+          select.value = 'youtube';
+        } else if (select.value === 'youtube') {
+          select.value = LAYOUT_KEYS.includes(lastLayoutBeforeYoutube) && lastLayoutBeforeYoutube !== 'youtube'
+            ? lastLayoutBeforeYoutube
+            : 'arena';
+        }
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+
+      ui.settingsForm.elements.font.addEventListener('change', () => {
+        const value = ui.settingsForm.elements.font.value;
+        ui.body.style.setProperty('--font-family', FONTS[value] || FONTS.bebas);
+        updateFontPreview();
+        requestFit();
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(requestFit).catch(() => null);
+        }
+        setTimeout(requestFit, 160);
+      });
+
+      SCALE_KEYS.forEach((key) => {
+        const input = ui.settingsForm.elements[key];
+        input.addEventListener('input', () => {
+          const output = document.querySelector('[data-scale-out="' + key + '"]');
+          if (output) output.textContent = input.value + '%';
+          ui.body.style.setProperty(SCALE_VARS[key], String(Number(input.value) / 100));
+          requestFit();
+        });
+      });
+
+      $('#scaleReset').addEventListener('click', () => {
+        SCALE_KEYS.forEach((key) => { ui.settingsForm.elements[key].value = 100; });
+        syncScaleOutputs();
+        applyScalePreview();
+      });
+
+      ui.settingsForm.elements.logo.addEventListener('change', () => {
+        const input = ui.settingsForm.elements.logo;
+        pickImage(input, {
+          maxSide: 640,
+          maxChars: 320000,
+          done: (src) => {
+            pendingLogo = src;
+            updateLogoPreview();
+          }
+        });
+      });
+
+      $('#logoClear').addEventListener('click', () => {
+        pendingLogo = '';
+        ui.settingsForm.elements.logo.value = '';
+        updateLogoPreview();
+      });
+
+      [['A', 'fTeamLogoA', 'teamLogoAClear'], ['B', 'fTeamLogoB', 'teamLogoBClear']].forEach(([team, inputId, clearId]) => {
+        const input = document.getElementById(inputId);
+        input.addEventListener('change', () => {
+          pickImage(input, {
+            maxSide: 640,
+            maxChars: 320000,
+            done: (src) => {
+              pendingTeamLogo[team] = src;
+              updateTeamLogoPreview(team);
+            }
+          });
+        });
+        document.getElementById(clearId).addEventListener('click', () => {
+          pendingTeamLogo[team] = '';
+          input.value = '';
+          updateTeamLogoPreview(team);
+        });
+      });
+
+      document.getElementById('fBgImage').addEventListener('change', (e) => {
+        const input = e.currentTarget;
+        pickImage(input, {
+          maxSide: 1920,
+          maxChars: 1500000,
+          done: (src) => {
+            pendingBgImage = src;
+            updateImagePreview(ui.bgImagePreview, pendingBgImage);
+          }
+        });
+      });
+      document.getElementById('bgImageClear').addEventListener('click', () => {
+        pendingBgImage = '';
+        document.getElementById('fBgImage').value = '';
+        updateImagePreview(ui.bgImagePreview, '');
+      });
+
+      [['home', 'fHomeImage', 'homeImageClear'], ['away', 'fAwayImage', 'awayImageClear']].forEach(([team, inputId, clearId]) => {
+        const input = document.getElementById(inputId);
+        input.addEventListener('change', () => {
+          pickImage(input, {
+            maxSide: 1400,
+            maxChars: 900000,
+            done: (src) => {
+              if (team === 'home') pendingHomeImage = src;
+              else pendingAwayImage = src;
+              updateImagePreview(team === 'home' ? ui.homeImagePreview : ui.awayImagePreview, src);
+            }
+          });
+        });
+        document.getElementById(clearId).addEventListener('click', () => {
+          if (team === 'home') pendingHomeImage = '';
+          else pendingAwayImage = '';
+          input.value = '';
+          updateImagePreview(team === 'home' ? ui.homeImagePreview : ui.awayImagePreview, '');
+        });
+      });
+
+      $('#settingsBtn').addEventListener('click', openSettings);
+      $('#settingsCancel').addEventListener('click', closeSettings);
+      ui.settingsOverlay.addEventListener('click', (e) => { if (e.target === ui.settingsOverlay) closeSettings(); });
+
+      ui.settingsForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const f = ui.settingsForm;
+        const newRoom = String(f.elements.room.value || 'main').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40) || 'main';
+
+        if (newRoom !== room) {
+          persist();
+          room = newRoom;
+          state = loadLocal(room);
+          state.settings.room = room;
+          undoStack.length = 0;
+          persist();
+          closeSettings();
+          render();
+          sync.connect();
+          history.replaceState(null, '', '?room=' + encodeURIComponent(room));
+          showToast('Комната: ' + room);
+          return;
+        }
+
+        const bestOf = [1, 3, 5].includes(Number(f.elements.bestOf.value)) ? Number(f.elements.bestOf.value) : 5;
+        const points = [11, 15, 21, 25].includes(Number(f.elements.points.value)) ? Number(f.elements.points.value) : 25;
+        const deciding = [11, 15, 21].includes(Number(f.elements.deciding.value)) ? Number(f.elements.deciding.value) : 15;
+        const formatChanged = bestOf !== state.settings.bestOf || points !== state.settings.points || deciding !== state.settings.deciding;
+        const inProgress = state.sets.length > 0 || state.score.A > 0 || state.score.B > 0 || state.setsWon.A > 0 || state.setsWon.B > 0;
+        if (formatChanged && inProgress && !confirm('Изменение формата сбросит текущий матч. Продолжить?')) return;
+
+        state.titles.match = String(f.elements.match.value || '').trim().slice(0, 40) || 'ВОЛЕЙБОЛ';
+        state.names.A = String(f.elements.teamA.value || '').trim().toUpperCase().slice(0, 30) || 'КОМАНДА А';
+        state.names.B = String(f.elements.teamB.value || '').trim().toUpperCase().slice(0, 30) || 'КОМАНДА Б';
+        state.settings.bestOf = bestOf;
+        state.settings.points = points;
+        state.settings.deciding = deciding;
+        state.settings.theme = f.elements.theme.value;
+        const layoutValue = LAYOUT_KEYS.includes(f.elements.layout.value) ? f.elements.layout.value : 'arena';
+        state.design.layout = layoutValue;
+        const active = paletteFor(layoutValue);
+        const activePalette = active.palette;
+        COLOR_KEYS.forEach((key) => {
+          const value = String(f.elements[key].value || '');
+          if (/^#[0-9a-fA-F]{6}$/.test(value)) activePalette[key] = value;
+        });
+        const fontValue = FONT_KEYS.includes(f.elements.font.value) ? f.elements.font.value : 'bebas';
+        if (active.kind === 'kts') state.design.ktsFont = fontValue;
+        else if (active.kind === 'youtube') state.design.youtubeFont = fontValue;
+        else if (active.kind === 'ytsets') state.design.ytsetsFont = fontValue;
+        else state.design.font = fontValue;
+        SCALE_KEYS.forEach((key) => {
+          const [min, max] = SCALE_LIMITS[key];
+          state.design[key] = clamp(Math.round(Number(f.elements[key].value) || 100), min, max);
+        });
+        state.design.logoHeight = clamp(Math.round(Number(f.elements.logoHeight.value) || 64), 16, 200);
+        state.design.logoPos = f.elements.logoPos.value === 'right' ? 'right' : 'left';
+        state.design.logo = pendingLogo;
+        state.design.teamLogoA = pendingTeamLogo.A;
+        state.design.teamLogoB = pendingTeamLogo.B;
+        state.design.teamLogoHeight = clamp(Math.round(Number(f.elements.teamLogoHeight.value) || 56), 16, 160);
+        state.design.bgImage = pendingBgImage;
+        state.design.bgFit = ['cover', 'contain', 'stretch', 'repeat'].includes(f.elements.bgFit.value) ? f.elements.bgFit.value : 'cover';
+        state.design.bgDim = clamp(Math.round(Number(f.elements.bgDim.value) || 0), 0, 90);
+        state.design.bgBlur = clamp(Math.round(Number(f.elements.bgBlur.value) || 0), 0, 30);
+        state.design.homeImage = pendingHomeImage;
+        state.design.awayImage = pendingAwayImage;
+        state.design.teamImageDim = clamp(Math.round(Number(f.elements.teamImageDim.value) || 0), 0, 90);
+        state.settings.autoClose = f.elements.autoClose.checked;
+        state.settings.sound = f.elements.sound.checked;
+        state.settings.showTimeouts = f.elements.showTimeouts.checked;
+        state.settings.room = newRoom;
+
+        if (formatChanged) {
+          state.score = { A: 0, B: 0 };
+          state.setsWon = { A: 0, B: 0 };
+          state.sets = [];
+          state.setNumber = 1;
+          state.serve = null;
+          state.timeouts = { A: MAX_TIMEOUTS, B: MAX_TIMEOUTS };
+          state.matchOver = false;
+          undoStack.length = 0;
+        }
+
+        state.rev = Math.max(Date.now(), state.rev + 1);
+        persist();
+        closeSettings();
+        render();
+
+        sync.sendState();
+      });
+
+      /* ---------- Клавиатура ---------- */
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') { closeSettings(); return; }
+        if (e.target && (e.target.isContentEditable || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName))) return;
+        const k = e.key.toLowerCase();
+        if (k === 'a') { e.preventDefault(); addPoint('A'); }
+        else if (k === 'z') { e.preventDefault(); removePoint('A'); }
+        else if (k === 'k') { e.preventDefault(); addPoint('B'); }
+        else if (k === 'm') { e.preventDefault(); removePoint('B'); }
+        else if (k === 's') { e.preventDefault(); endSetManual(); }
+        else if (k === 'u') { e.preventDefault(); undo(); }
+        else if (k === 'r') { e.preventDefault(); resetSet(); }
+        else if (k === 'n') { e.preventDefault(); newMatch(); }
+        else if (k === 'f') { e.preventDefault(); $('#fsBtn').click(); }
+        else if (k === 'b') { e.preventDefault(); $('#boardBtn').click(); }
+        else if (k === 't') { e.preventDefault(); timeout(e.shiftKey ? 'B' : 'A'); }
+      });
+
+      document.addEventListener('pointerdown', ensureAudio, { once: true });
+
+      window.addEventListener('beforeunload', () => sync.close());
+
+      /* ---------- Старт ---------- */
+      if (DISPLAY) {
+        ui.name.A.contentEditable = 'false';
+        ui.name.B.contentEditable = 'false';
+        ui.matchTitle.contentEditable = 'false';
+      }
+      applyStatsBlock();
+      if (location.protocol !== 'file:') {
+        fetch('/net').then((response) => response.json()).then((data) => {
+          if (data && Array.isArray(data.ips) && data.ips.length) {
+            lanIp = String(data.ips[0] || '');
+            if (!ui.settingsOverlay.hidden) ui.remoteLinkText.textContent = remoteUrl();
+          }
+        }).catch(() => null);
+      }
+      render();
+      sync.connect();
+      persist();
+    })();
+  </script>
+</body>
+
+</html>

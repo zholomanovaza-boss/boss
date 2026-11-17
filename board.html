@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Табло — Волейбол</title>
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+    }
+
+    body.transparent {
+      background: transparent;
+    }
+
+    iframe {
+      display: block;
+      width: 100vw;
+      height: 100dvh;
+      border: 0;
+      background: transparent;
+    }
+  </style>
+</head>
+
+<body>
+  <iframe id="board" title="Табло матча" allow="autoplay; fullscreen"></iframe>
+  <script>
+    (() => {
+      'use strict';
+
+      const params = new URLSearchParams(location.search);
+      const inner = new URL('index.html', location.href);
+      inner.searchParams.set('display', '1');
+
+      const room = String(params.get('room') || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40);
+      if (room) inner.searchParams.set('room', room);
+
+      const theme = params.get('theme');
+      if (['arena', 'kts', 'dark', 'blue'].includes(theme)) inner.searchParams.set('theme', theme);
+
+      if (params.get('bg') === 'transparent') {
+        inner.searchParams.set('bg', 'transparent');
+        document.body.classList.add('transparent');
+      } else {
+        inner.searchParams.set('bg', 'opaque');
+      }
+
+      document.getElementById('board').src = inner.href;
+    })();
+  </script>
+</body>
+
+</html>

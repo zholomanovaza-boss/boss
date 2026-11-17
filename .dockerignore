@@ -1,0 +1,11 @@
+data
+CODE.md
+CODE.before.md
+.git
+.gitignore
+.dockerignore
+Dockerfile
+*.md
+*.log
+Thumbs.db
+.DS_Store

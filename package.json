@@ -1,0 +1,22 @@
+{
+  "name": "arena-volley-scoreboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Волейбольное табло в стиле KeepTheScore Arena: онлайн-синхронизация, тайм-ауты, подача, звук и OBS-оверлей",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "volleyball",
+    "scoreboard",
+    "obs",
+    "websocket",
+    "keepthescore"
+  ],
+  "license": "MIT"
+}

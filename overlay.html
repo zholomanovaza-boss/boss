@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Волейбол — OBS оверлей</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Montserrat:wght@400;600;800&family=Oswald:wght@400;600;700&family=Roboto+Condensed:wght@400;700&family=Russo+One&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --home-bg: #141fff;
+      --home-fg: #f9ca24;
+      --away-bg: #202132;
+      --away-fg: #ffffff;
+      --panel: rgba(0, 0, 0, 0.38);
+      --text: #ffffff;
+      --scale: 1;
+      --pos: 40px;
+      --name-font: 34px;
+      --score-font: 74px;
+      --meta-font: 15px;
+      --radius: 0px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum", "tnum";
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      background: transparent;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: "Bebas Neue", "Oswald", Roboto, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: var(--pos);
+    }
+
+    body.top {
+      align-items: flex-start;
+    }
+
+    .wrap {
+      transform: scale(var(--scale));
+      transform-origin: bottom center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.55));
+    }
+
+    body.top .wrap {
+      transform-origin: top center;
+    }
+
+    .bug {
+      display: flex;
+      align-items: stretch;
+      height: 86px;
+      background: var(--panel);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .team {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 190px;
+      max-width: 320px;
+      padding: 0 16px;
+    }
+
+    .team.home {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(0, 0, 0, 0.12) 100%);
+      background-color: var(--home-bg);
+      color: var(--home-fg);
+      justify-content: flex-end;
+    }
+
+    .team.away {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(0, 0, 0, 0.12) 100%);
+      background-color: var(--away-bg);
+      color: var(--away-fg);
+      justify-content: flex-start;
+    }
+
+    .name {
+      font-weight: 900;
+      font-size: var(--name-font);
+      line-height: 1;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .team.home .name {
+      text-align: right;
+    }
+
+    .sets {
+      flex: 0 0 auto;
+      min-width: 30px;
+      padding: 3px 7px;
+      background: rgba(0, 0, 0, 0.38);
+      font-weight: 900;
+      font-size: calc(var(--name-font) * 0.62);
+      line-height: 1;
+      text-align: center;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
+    }
+
+    .ball {
+      flex: 0 0 auto;
+      width: 20px;
+      height: 20px;
+      opacity: 0;
+      transform: scale(0.7);
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    .ball.on {
+      opacity: 1;
+      transform: scale(1);
+      filter: drop-shadow(0 0 5px currentColor);
+    }
+
+    .ball svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .ov-team-logo {
+      display: none;
+      height: calc(var(--name-font) * 0.95);
+      max-width: 44px;
+      flex: 0 0 auto;
+      object-fit: contain;
+    }
+
+    .ov-team-logo.on {
+      display: block;
+    }
+
+    .score {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 92px;
+      padding: 0 10px;
+      font-weight: 900;
+      font-size: var(--score-font);
+      line-height: 1;
+      text-shadow: 0 4px 14px rgba(0, 0, 0, 0.65);
+    }
+
+    .score.home {
+      background-color: var(--home-bg);
+      color: var(--home-fg);
+      border-left: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .score.away {
+      background-color: var(--away-bg);
+      color: var(--away-fg);
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .score.bump {
+      animation: bump 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+    }
+
+    @keyframes bump {
+      0% { transform: scale(1); }
+      35% { transform: scale(1.12); }
+      100% { transform: scale(1); }
+    }
+
+    .dash {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      font-size: calc(var(--score-font) * 0.8);
+      font-weight: 900;
+      color: rgba(255, 255, 255, 0.75);
+      text-shadow: 0 4px 14px rgba(0, 0, 0, 0.65);
+    }
+
+    .meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px;
+      background: var(--panel);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: var(--meta-font);
+      white-space: nowrap;
+      text-shadow: 0 2px 5px rgba(0, 0, 0, 0.6);
+    }
+
+    .meta .sep {
+      opacity: 0.4;
+    }
+
+    .meta .history {
+      letter-spacing: 0.1em;
+      opacity: 0.86;
+    }
+
+    .meta .winner {
+      color: #ffd166;
+      font-weight: 700;
+    }
+
+    .ov-logo {
+      display: none;
+      height: calc(var(--meta-font) * 1.7);
+      max-width: 110px;
+      object-fit: contain;
+    }
+
+    .ov-logo.on {
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="bug">
+      <div class="team home">
+        <span class="ball" id="ballA" title="Подача">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 3c3.4 2.9 5 5.9 5 9s-1.6 6.1-5 9" />
+            <path d="M12 3c-3.4 2.9-5 5.9-5 9s1.6 6.1 5 9" />
+            <path d="M3.4 9.2c4 1.7 7.9 1.7 11.9 0M3.4 14.8c4-1.7 7.9-1.7 11.9 0" />
+          </svg>
+        </span>
+        <img class="ov-team-logo" id="ovLogoA" alt="">
+        <span class="name" id="nameA">КАРА-КУЛЖА</span>
+        <span class="sets" id="setsA">0</span>
+      </div>
+      <div class="score home" id="scoreA">0</div>
+      <div class="dash">:</div>
+      <div class="score away" id="scoreB">0</div>
+      <div class="team away">
+        <span class="sets" id="setsB">0</span>
+        <span class="name" id="nameB">НООКАТ</span>
+        <img class="ov-team-logo" id="ovLogoB" alt="">
+        <span class="ball" id="ballB" title="Подача">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 3c3.4 2.9 5 5.9 5 9s-1.6 6.1-5 9" />
+            <path d="M12 3c-3.4 2.9-5 5.9-5 9s1.6 6.1 5 9" />
+            <path d="M3.4 9.2c4 1.7 7.9 1.7 11.9 0M3.4 14.8c4-1.7 7.9-1.7 11.9 0" />
+          </svg>
+        </span>
+      </div>
+    </div>
+    <div class="meta">
+      <img class="ov-logo" id="ovLogo" alt="">
+      <span id="setMeta">ПАРТИЯ 1 · ДО 25</span>
+      <span class="sep">·</span>
+      <span class="history" id="history">—</span>
+      <span class="winner" id="winner" hidden></span>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const FONTS = {
+        bebas: '"Bebas Neue", "Oswald", Roboto, system-ui, sans-serif',
+        oswald: '"Oswald", system-ui, sans-serif',
+        anton: '"Anton", "Russo One", system-ui, sans-serif',
+        montserrat: '"Montserrat", system-ui, sans-serif',
+        roboto: '"Roboto Condensed", system-ui, sans-serif',
+        system: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+      };
+
+      const params = new URLSearchParams(location.search);
+      const room = (params.get('room') || 'main').replace(/[^a-zA-Z0-9_-]/g, '') || 'main';
+      const scale = Math.min(3, Math.max(0.3, Number(params.get('scale')) || 1));
+      const pos = params.get('pos') === 'top' ? 'top' : 'bottom';
+
+      document.documentElement.style.setProperty('--scale', String(scale));
+      if (pos === 'top') document.body.classList.add('top');
+      if (params.get('size')) {
+        const f = Math.min(3, Math.max(0.5, Number(params.get('size')) || 1));
+        document.documentElement.style.setProperty('--name-font', (34 * f) + 'px');
+        document.documentElement.style.setProperty('--score-font', (74 * f) + 'px');
+        document.documentElement.style.setProperty('--meta-font', (15 * f) + 'px');
+        document.querySelector('.bug').style.height = (86 * f) + 'px';
+      }
+
+      const $ = (s) => document.querySelector(s);
+      const el = {
+        nameA: $('#nameA'), nameB: $('#nameB'),
+        scoreA: $('#scoreA'), scoreB: $('#scoreB'),
+        setsA: $('#setsA'), setsB: $('#setsB'),
+        ballA: $('#ballA'), ballB: $('#ballB'),
+        setMeta: $('#setMeta'), history: $('#history'), winner: $('#winner'),
+        logo: $('#ovLogo'), teamLogoA: $('#ovLogoA'), teamLogoB: $('#ovLogoB')
+      };
+
+      let state = null;
+      let last = { A: null, B: null };
+
+      function normalize(raw) {
+        if (!raw || typeof raw !== 'object') return null;
+        const settings = Object.assign({ bestOf: 5, points: 25, deciding: 15 }, raw.settings || {});
+        return {
+          rev: Number(raw.rev) || 0,
+          names: Object.assign({ A: 'КОМАНДА А', B: 'КОМАНДА Б' }, raw.names || {}),
+          score: Object.assign({ A: 0, B: 0 }, raw.score || {}),
+          setsWon: Object.assign({ A: 0, B: 0 }, raw.setsWon || {}),
+          sets: Array.isArray(raw.sets) ? raw.sets : [],
+          setNumber: Number(raw.setNumber) || 1,
+          serve: raw.serve === 'A' || raw.serve === 'B' ? raw.serve : null,
+          matchOver: Boolean(raw.matchOver),
+          settings: {
+            bestOf: Number(settings.bestOf) || 5,
+            points: Number(settings.points) || 25,
+            deciding: Number(settings.deciding) || 15
+          },
+          design: Object.assign({
+            font: 'bebas',
+            text: '#ffffff',
+            homeBg: '#141fff',
+            homeFg: '#f9ca24',
+            awayBg: '#202132',
+            awayFg: '#ffffff',
+            logo: '',
+            logoHeight: 64,
+            logoPos: 'left',
+            teamLogoA: '',
+            teamLogoB: '',
+            teamLogoHeight: 56
+          }, raw.design || {})
+        };
+      }
+
+      function bump(node) {
+        node.classList.remove('bump');
+        void node.offsetWidth;
+        node.classList.add('bump');
+      }
+
+      function render() {
+        if (!state) return;
+        const design = state.design || {};
+        const root = document.documentElement;
+        root.style.setProperty('--text', design.text || '#ffffff');
+        root.style.setProperty('--home-bg', design.homeBg || '#141fff');
+        root.style.setProperty('--home-fg', design.homeFg || '#f9ca24');
+        root.style.setProperty('--away-bg', design.awayBg || '#202132');
+        root.style.setProperty('--away-fg', design.awayFg || '#ffffff');
+        document.body.style.fontFamily = FONTS[design.font] || FONTS.bebas;
+        const hasLogo = Boolean(design.logo);
+        el.logo.classList.toggle('on', hasLogo);
+        if (hasLogo && el.logo.getAttribute('src') !== design.logo) el.logo.src = design.logo;
+
+        const hasTeamA = Boolean(design.teamLogoA);
+        const hasTeamB = Boolean(design.teamLogoB);
+        el.teamLogoA.classList.toggle('on', hasTeamA);
+        el.teamLogoB.classList.toggle('on', hasTeamB);
+        if (hasTeamA && el.teamLogoA.getAttribute('src') !== design.teamLogoA) el.teamLogoA.src = design.teamLogoA;
+        if (hasTeamB && el.teamLogoB.getAttribute('src') !== design.teamLogoB) el.teamLogoB.src = design.teamLogoB;
+
+        el.nameA.textContent = state.names.A;
+        el.nameB.textContent = state.names.B;
+        el.setsA.textContent = state.setsWon.A;
+        el.setsB.textContent = state.setsWon.B;
+
+        if (last.A !== null && last.A !== state.score.A) bump(el.scoreA);
+        if (last.B !== null && last.B !== state.score.B) bump(el.scoreB);
+        last.A = state.score.A;
+        last.B = state.score.B;
+        el.scoreA.textContent = state.score.A;
+        el.scoreB.textContent = state.score.B;
+
+        el.ballA.classList.toggle('on', state.serve === 'A');
+        el.ballB.classList.toggle('on', state.serve === 'B');
+
+        const target = state.settings.bestOf > 1 && state.setNumber >= state.settings.bestOf ? state.settings.deciding : state.settings.points;
+        el.setMeta.textContent = 'ПАРТИЯ ' + state.setNumber + ' · ДО ' + target;
+
+        const hist = state.sets.map((s) => s.a + ':' + s.b).join('  ');
+        el.history.textContent = hist || '—';
+
+        const need = Math.ceil(state.settings.bestOf / 2);
+        const winner = state.matchOver ? (state.setsWon.A >= need ? state.names.A : (state.setsWon.B >= need ? state.names.B : null)) : null;
+        el.winner.hidden = !winner;
+        if (winner) el.winner.textContent = '🏆 ' + winner;
+      }
+
+      function apply(raw) {
+        const next = normalize(raw);
+        if (!next) return;
+        if (!state || next.rev >= state.rev) {
+          state = next;
+          render();
+        }
+      }
+
+      // Локальный кэш (если оверлей открыт в том же браузере, что и пульт)
+      try {
+        const perRoom = localStorage.getItem('arena-volley-v2:' + room);
+        const raw = perRoom || localStorage.getItem('arena-volley-v2');
+        if (raw) {
+          const cached = JSON.parse(raw);
+          const matchesRoom = perRoom || !cached || !cached.settings || cached.settings.room === room;
+          if (matchesRoom) apply(cached);
+        }
+      } catch { /* ignore */ }
+
+      let ws = null;
+      let retry = 0;
+      let timer = null;
+      const clientId = Math.random().toString(36).slice(2, 10);
+
+      function connect() {
+        clearTimeout(timer);
+        const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        try {
+          ws = new WebSocket(proto + '//' + location.host + '/ws?room=' + encodeURIComponent(room));
+        } catch {
+          schedule();
+          return;
+        }
+        ws.onopen = () => {
+          retry = 0;
+          ws.send(JSON.stringify({ type: 'hello', room, clientId }));
+        };
+        ws.onmessage = (event) => {
+          let msg;
+          try { msg = JSON.parse(event.data); } catch { return; }
+          if (msg.type === 'state' && msg.state) apply(msg.state);
+        };
+        ws.onclose = () => schedule();
+        ws.onerror = () => { try { ws.close(); } catch { /* ignore */ } };
+      }
+
+      function schedule() {
+        clearTimeout(timer);
+        timer = setTimeout(connect, Math.min(10000, 1000 * Math.pow(2, retry++)));
+      }
+
+      connect();
+      render();
+    })();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: arena-volley
+    runtime: node
+    plan: free
+    region: frankfurt
+    autoDeploy: true
+    buildCommand: npm install --omit=dev
+    startCommand: node server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+
+    # Постоянное хранение состояния комнат (платный compute-план, Free диск не поддерживает):
+    # Settings -> Disks -> Add Disk, Mount Path: /var/data
+    # Затем раскомментируйте блок ниже.
+    #
+    # envVars:
+    #   - key: DATA_DIR
+    #     value: /var/data
+    # disk:
+    #   name: arena-data
+    #   mountPath: /var/data
+    #   sizeGB: 1
