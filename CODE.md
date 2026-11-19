@@ -338,6 +338,10 @@
       display: flex;
       align-items: stretch;
       gap: 0;
+      transform: translateX(-25%);
+    }
+
+    body.logo-ticker .logo-strip {
       animation: logo-marquee var(--logo-marquee-duration, 45s) linear infinite;
       will-change: transform;
     }
@@ -1093,6 +1097,13 @@
     .btn.small {
       padding: 6px 12px;
       font-size: 11px;
+    }
+
+    .btn.small.on {
+      background: #ffb63b;
+      border-color: #ffb63b;
+      color: #16110a;
+      font-weight: 700;
     }
 
     .color-grid {
@@ -2612,6 +2623,9 @@
           <input id="fTitleLogoHeight" name="titleLogoHeight" type="number" min="16" max="1000" step="1">
         </div>
         <div class="field full">
+          <button class="btn small" type="button" id="titleLogoTickerBtn" aria-pressed="false">Бегущая строка логотипов: ВЫКЛ</button>
+        </div>
+        <div class="field full">
           <label>Логотипы команд (PNG/SVG/JPG, до 12 МБ — сожмутся автоматически)</label>
           <div class="team-logo-grid">
             <div>
@@ -2854,6 +2868,7 @@
           logoPos: 'left',
           titleLogos: [],
           titleLogoHeight: 120,
+          titleLogoTicker: false,
           teamLogoA: '',
           teamLogoB: '',
           teamLogoHeight: 56,
@@ -2938,6 +2953,7 @@
           ? s.design.titleLogos.slice(0, TITLE_LOGO_COUNT).map((x) => (typeof x === 'string' && x.length <= 320000 ? x : ''))
           : [];
         s.design.titleLogoHeight = clamp(Math.round(Number(s.design.titleLogoHeight) || 120), 16, 1000);
+        s.design.titleLogoTicker = Boolean(s.design.titleLogoTicker);
         s.design.teamLogoA = typeof s.design.teamLogoA === 'string' && s.design.teamLogoA.length <= 400000 ? s.design.teamLogoA : '';
         s.design.teamLogoB = typeof s.design.teamLogoB === 'string' && s.design.teamLogoB.length <= 400000 ? s.design.teamLogoB : '';
         s.design.teamLogoHeight = clamp(Math.round(Number(s.design.teamLogoHeight) || 56), 16, 600);
@@ -3024,6 +3040,7 @@
         setsRow: $('#midSetsRow'),
         titleBox: $('.box-title'),
         titleLogos: $('#titleLogos'),
+        titleLogoTickerBtn: $('#titleLogoTickerBtn'),
         logo: $('#logoImg'),
         logoPreview: $('#logoPreview'),
         teamLogo: { A: $('#teamLogoA'), B: $('#teamLogoB') },
@@ -3418,6 +3435,8 @@
         if (ui.liveBadge) ui.liveBadge.hidden = !(yt || sets);
         ui.body.style.setProperty('--logo-height', d.logoHeight + 'px');
         ui.body.style.setProperty('--title-logo-height', d.titleLogoHeight + 'px');
+        ui.body.classList.toggle('logo-ticker', Boolean(d.titleLogoTicker));
+        updateTitleLogoTickerBtn();
         ui.body.style.setProperty('--team-logo-height', d.teamLogoHeight + 'px');
         ui.body.style.setProperty('--youtube-logo-height', d.youtubeLogoHeight + 'px');
 
@@ -3505,6 +3524,13 @@
         renderControls();
         ui.soundBtn.textContent = state.settings.sound ? '🔊' : '🔇';
         requestFit();
+      }
+
+      function updateTitleLogoTickerBtn() {
+        const on = Boolean(state.design.titleLogoTicker);
+        ui.titleLogoTickerBtn.textContent = 'Бегущая строка логотипов: ' + (on ? 'ВКЛ' : 'ВЫКЛ');
+        ui.titleLogoTickerBtn.classList.toggle('on', on);
+        ui.titleLogoTickerBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
       }
 
       let lastTitleLogosKey = null;
@@ -3829,6 +3855,7 @@
         pendingLogo = state.design.logo;
         updateLogoPreview();
         f.elements.titleLogoHeight.value = state.design.titleLogoHeight;
+        updateTitleLogoTickerBtn();
         const savedTitleLogos = state.design.titleLogos || [];
         pendingTitleLogos = [];
         for (let i = 0; i < TITLE_LOGO_COUNT; i += 1) {
@@ -4154,6 +4181,16 @@
         const value = clamp(Math.round(Number(ui.settingsForm.elements.titleLogoHeight.value) || 120), 16, 1000);
         ui.body.style.setProperty('--title-logo-height', value + 'px');
         requestFit();
+      });
+
+      ui.titleLogoTickerBtn.addEventListener('click', () => {
+        state.design.titleLogoTicker = !state.design.titleLogoTicker;
+        state.rev = Math.max(Date.now(), state.rev + 1);
+        updateTitleLogoTickerBtn();
+        persist();
+        render();
+        sync.sendState();
+        showToast(state.design.titleLogoTicker ? 'Бегущая строка включена' : 'Бегущая строка выключена');
       });
 
       [['A', 'fTeamLogoA', 'teamLogoAClear'], ['B', 'fTeamLogoB', 'teamLogoBClear']].forEach(([team, inputId, clearId]) => {
@@ -7450,13 +7487,15 @@ YouTube — сеты (как KeepTheScore)**. У этого табло **сво�
   у третьего табло (KeepTheScore), четвёртого (YouTube) и пятого (YouTube — сеты)
   цвета и шрифт свои — форма переключается на них автоматически при выборе варианта;
 - логотип: PNG / SVG / JPG, размер и положение слева или справа в шапке табло;
-- **до 10 логотипов в шапке одной бегущей строкой сверху** — загружаются в настройках
-  («Логотипы в заголовке»), идут подряд без зазоров и полей, от края до края шапки
-  и плавно прокручиваются по кругу без разрывов; границы между соседними логотипами
-  сглажены мягким переходом, чтобы фон не просвечивал, а редактируемый заголовок матча
-  вынесен на отдельную строку под ними; размер настраивается полем
+- **до 10 логотипов в шапке одной сплошной строкой сверху** — загружаются в настройках
+  («Логотипы в заголовке»), идут подряд без зазоров и полей, от края до края шапки;
+  границы между соседними логотипами сглажены мягким переходом, чтобы фон не просвечивал,
+  а редактируемый заголовок матча вынесен на отдельную строку под ними; размер настраивается полем
   «Размер логотипов в заголовке, px» (до 1000 px, автоматически подгоняется под окно,
   чтобы не было переполнения);
+- **кнопка «Бегущая строка логотипов»** в настройках рядом с размером логотипов:
+  по умолчанию ряд стоит на месте, нажатие кнопки включает плавную прокрутку по кругу
+  без разрывов; состояние сохраняется для комнаты и сразу применяется на всех табло;
 - логотипы команд A и B: отдельные файлы и общий размер (до 600 px);
   отдельно можно задать логотипы и размер **только для YouTube** (`board4.html` / `board5.html`, до 600 px):
   если YouTube-логотипы не загружены, эти табло используют общие логотипы;
