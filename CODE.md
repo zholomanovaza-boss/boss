@@ -316,11 +316,10 @@
     }
 
     .title-logos {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0;
+      position: relative;
+      display: block;
       width: 100%;
+      height: min(var(--title-logo-height, 120px), var(--cell-w, 10vw), 26vh);
       min-width: 0;
       overflow: hidden;
       flex: 0 1 auto;
@@ -330,14 +329,45 @@
       display: none;
     }
 
-    .title-logos img {
-      height: min(var(--title-logo-height, 120px), var(--cell-w, 10vw), 26vh);
+    .logo-strip {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+    }
+
+    .logo-strip img {
+      height: 100%;
       width: 0;
       min-width: 0;
       flex: 1 1 0;
       object-fit: fill;
-      filter: drop-shadow(0 0.3vh 0.9vh rgba(0, 0, 0, 0.4));
       pointer-events: none;
+    }
+
+    .logo-strip--blur {
+      filter: blur(18px);
+    }
+
+    .logo-strip--sharp img {
+      -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 17%, #000 83%, transparent 100%);
+      mask-image: linear-gradient(90deg, transparent 0%, #000 17%, #000 83%, transparent 100%);
+    }
+
+    .logo-strip--sharp img:first-child {
+      -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 83%, transparent 100%);
+      mask-image: linear-gradient(90deg, #000 0%, #000 83%, transparent 100%);
+    }
+
+    .logo-strip--sharp img:last-child {
+      -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 17%, #000 100%);
+      mask-image: linear-gradient(90deg, transparent 0%, #000 17%, #000 100%);
+    }
+
+    .logo-strip--sharp img:only-child {
+      -webkit-mask-image: none;
+      mask-image: none;
     }
 
     .el-logo {
@@ -3493,11 +3523,16 @@
         row.replaceChildren();
         if (logos.length) {
           row.style.setProperty('--cell-w', (100 / logos.length) + 'vw');
-          logos.forEach((src) => {
-            const img = document.createElement('img');
-            img.src = src;
-            img.alt = '';
-            row.appendChild(img);
+          ['blur', 'sharp'].forEach((kind) => {
+            const strip = document.createElement('div');
+            strip.className = 'logo-strip logo-strip--' + kind;
+            logos.forEach((src) => {
+              const img = document.createElement('img');
+              img.src = src;
+              img.alt = '';
+              strip.appendChild(img);
+            });
+            row.appendChild(strip);
           });
         }
         requestFit();
@@ -7419,7 +7454,8 @@ YouTube — сеты (как KeepTheScore)**. У этого табло **сво�
   цвета и шрифт свои — форма переключается на них автоматически при выборе варианта;
 - логотип: PNG / SVG / JPG, размер и положение слева или справа в шапке табло;
 - **до 10 логотипов в шапке одной сплошной строкой сверху** — загружаются в настройках
-  («Логотипы в заголовке»), идут подряд без зазоров и полей, от края до края шапки,
+  («Логотипы в заголовке»), идут подряд без зазоров и полей, от края до края шапки;
+  границы между соседними логотипами сглажены мягким переходом, чтобы фон не просвечивал,
   а редактируемый заголовок матча вынесен на отдельную строку под ними; размер настраивается полем
   «Размер логотипов в заголовке, px» (до 1000 px, автоматически подгоняется под окно,
   чтобы не было переполнения);
