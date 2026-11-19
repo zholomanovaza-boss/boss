@@ -260,7 +260,7 @@
 
     .arena {
       --name-font: clamp(26px, 5.2vw, 92px);
-      --score-font: clamp(96px, 15.5vw, 250px);
+      --score-font: clamp(96px, 15.5vw, 360px);
       --title-font: clamp(16px, 2.4vw, 40px);
       --set-font: clamp(24px, 3.8vw, 52px);
       --counter-font: clamp(30px, 5vw, 68px);
@@ -2585,7 +2585,7 @@
             <label class="scale-item">
               <span>Счёт</span>
               <output data-scale-out="scoreScale">100%</output>
-              <input type="range" name="scoreScale" min="50" max="150" step="5" value="100">
+              <input type="range" name="scoreScale" min="50" max="300" step="5" value="100">
             </label>
             <label class="scale-item">
               <span>Блок Sets Won / Time Outs</span>
@@ -2851,7 +2851,7 @@
       const SCALE_LIMITS = {
         titleScale: [50, 150],
         nameScale: [50, 150],
-        scoreScale: [50, 150],
+        scoreScale: [50, 300],
         midScale: [50, 150],
         setScale: [50, 150],
         panelScale: [70, 140]
@@ -7549,8 +7549,10 @@ YouTube — сеты (как KeepTheScore)**. У этого табло **сво�
 - тема: Arena / KeepTheScore (тёмно-синяя) / тёмная / синяя;
 - **вариант табло** — 10 готовых оформлений (см. ниже), четвёртое табло для YouTube
   включается ещё и галочкой;
-- **размеры шрифтов и плашек** — ползунки для заголовка матча, названий команд, счёта,
-  блока Sets Won / Time Outs, истории партий (50–150 %) и размера плашек у всех блоков (70–140 %);
+- **размеры шрифтов и плашек** — ползунки для заголовка матча, названий команд,
+  блока Sets Won / Time Outs, истории партий (50–150 %), **счёта (50–300 %)**
+  и размера плашек у всех блоков (70–140 %); счёт автоматически уменьшается только тогда,
+  когда реально не помещается в своё поле.
 - **шрифт**: Bebas Neue / Oswald / Anton / Montserrat / Roboto Condensed / системный.
   Шрифт применяется сразу при выборе (живой предпросмотр) ко всем элементам табло,
   включая блок Sets Won / Time Outs и строки партий; рядом со списком есть строка
