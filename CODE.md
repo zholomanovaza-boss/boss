@@ -295,7 +295,8 @@
       justify-content: center;
       flex-direction: column;
       gap: clamp(2px, 0.6vh, 8px);
-      padding: calc(clamp(6px, 0.9vw, 10px) * var(--panel-scale, 1)) calc(clamp(16px, 4vw, 40px) * var(--panel-scale, 1));
+      padding: calc(clamp(6px, 0.9vw, 10px) * var(--panel-scale, 1)) 0;
+      padding-inline: 0 !important;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.26) 100%);
       background-color: var(--title-bg);
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
@@ -311,13 +312,14 @@
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
+      padding-inline: clamp(8px, 2vw, 24px);
     }
 
     .title-logos {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: clamp(1px, 0.2vw, 4px);
+      gap: 0;
       width: 100%;
       min-width: 0;
       overflow: hidden;
@@ -329,13 +331,11 @@
     }
 
     .title-logos img {
-      height: var(--title-logo-height, 120px);
-      max-height: min(var(--cell-w, 10vw), 26vh);
-      width: auto;
-      max-width: var(--cell-w, 10vw);
+      height: min(var(--title-logo-height, 120px), var(--cell-w, 10vw), 26vh);
+      width: 0;
       min-width: 0;
-      flex: 0 1 auto;
-      object-fit: contain;
+      flex: 1 1 0;
+      object-fit: fill;
       filter: drop-shadow(0 0.3vh 0.9vh rgba(0, 0, 0, 0.4));
       pointer-events: none;
     }
@@ -3492,7 +3492,7 @@
         row.hidden = logos.length === 0;
         row.replaceChildren();
         if (logos.length) {
-          row.style.setProperty('--cell-w', (90 / logos.length) + 'vw');
+          row.style.setProperty('--cell-w', (100 / logos.length) + 'vw');
           logos.forEach((src) => {
             const img = document.createElement('img');
             img.src = src;
@@ -7418,9 +7418,9 @@ YouTube — сеты (как KeepTheScore)**. У этого табло **сво�
   у третьего табло (KeepTheScore), четвёртого (YouTube) и пятого (YouTube — сеты)
   цвета и шрифт свои — форма переключается на них автоматически при выборе варианта;
 - логотип: PNG / SVG / JPG, размер и положение слева или справа в шапке табло;
-- **до 10 логотипов в шапке одной плотной строкой сверху** — загружаются в настройках
-  («Логотипы в заголовке»), идут подряд без пустых мест, а редактируемый заголовок матча
-  вынесен на отдельную строку под ними; размер настраивается полем
+- **до 10 логотипов в шапке одной сплошной строкой сверху** — загружаются в настройках
+  («Логотипы в заголовке»), идут подряд без зазоров и полей, от края до края шапки,
+  а редактируемый заголовок матча вынесен на отдельную строку под ними; размер настраивается полем
   «Размер логотипов в заголовке, px» (до 1000 px, автоматически подгоняется под окно,
   чтобы не было переполнения);
 - логотипы команд A и B: отдельные файлы и общий размер (до 600 px);
