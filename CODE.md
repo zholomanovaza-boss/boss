@@ -652,10 +652,10 @@
 
     .mid-pair {
       display: flex;
-      flex-direction: column;
-      align-items: center;
+      flex-direction: row;
+      align-items: baseline;
       justify-content: center;
-      gap: clamp(0px, 0.15vw, 3px);
+      gap: clamp(6px, 0.8vw, 14px);
       width: 100%;
       min-width: 0;
       padding: calc(var(--mid-row-pad-y) * var(--panel-scale, 1)) calc(var(--mid-row-pad-x) * var(--panel-scale, 1));
@@ -677,13 +677,13 @@
     }
 
     .mid-value {
-      display: flex;
+      display: inline-flex;
       align-items: baseline;
       justify-content: center;
-      gap: 1px;
+      min-width: 1ch;
       margin-left: 0;
       font-weight: 900;
-      font-size: calc(clamp(30px, 3.4vw, 58px) * var(--mid-scale, 1) * var(--mid-fit, 1));
+      font-size: calc(clamp(26px, 2.6vw, 44px) * var(--mid-scale, 1) * var(--mid-fit, 1));
       line-height: 1;
       white-space: nowrap;
       text-shadow: var(--digit-shadow);
@@ -2421,16 +2421,18 @@
           <div class="box-arena-center">
             <div class="box-arena-heading">
               <div class="mid-pair mid-sets-won">
+                <span class="mid-value mid-value-a" id="midSetsWonA">0</span>
                 <span class="mid-label">Sets Won</span>
-                <span class="mid-value"><span id="midSetsWonA">0</span><span class="mid-sep">:</span><span id="midSetsWonB">0</span></span>
+                <span class="mid-value mid-value-b" id="midSetsWonB">0</span>
               </div>
             </div>
 
             <div class="box-arena-mid">
               <div class="mid-stats">
                 <div class="mid-pair mid-timeouts">
+                  <span class="mid-value mid-value-a mid-to" id="midToA" data-team="A" title="Тайм-аут: нажмите, чтобы потратить">2</span>
                   <span class="mid-label">Time Outs</span>
-                  <span class="mid-value"><span class="mid-to" id="midToA" data-team="A" title="Тайм-аут: нажмите, чтобы потратить">2</span><span class="mid-sep">:</span><span class="mid-to" id="midToB" data-team="B" title="Тайм-аут: нажмите, чтобы потратить">2</span></span>
+                  <span class="mid-value mid-value-b mid-to" id="midToB" data-team="B" title="Тайм-аут: нажмите, чтобы потратить">2</span>
                 </div>
               </div>
               <div class="box-arena-sets" id="midSetsRow"></div>
@@ -7204,11 +7206,11 @@ npm start
 - **Shift + клик** или правый клик по счёту — −1 очко.
 - **Клик по мячу** рядом с названием команды — переключить подачу.
 - **Клик по «Time Outs»** — потратить тайм-аут (2 на партию, сбрасываются в новой партии).
-- **Блок Sets Won / Time Outs** — статистика по центру между двумя большими счетами:
-  счёт A слева, счёт B справа. Верхняя строка идёт на одной линии с названиями команд:
-  `название A · SETS WON · название B`, а под `SETS WON` показан счёт по партиям `3 : 0`.
-  Ниже, между большими счетами, вертикальной колонкой: Time Outs — подпись, под ней счёт
-  `2 : 2`, затем все партии матча (завершённые, текущая и оставшиеся) одним столбиком.
+- **Блок Sets Won / Time Outs** — статистика по центру между двумя большими счетами.
+  Каждая строка идёт в одну линию по схеме «число — подпись — число»: слева значение команды A,
+  в центре подпись, справа значение команды B — например `3 SETS WON 0` и `2 TIME OUTS 2`.
+  Ниже, между большими счетами, вертикальной колонкой идут все партии матча
+  (завершённые, текущая и оставшиеся) одним столбиком.
   Каждая строка занимает всю
   ширину колонки и оформлена одинаковой плашкой с теми же отступами, скруглением и фоном;
   фон самой колонки совпадает с фоном плашек, поэтому промежутки между строками не светлее
