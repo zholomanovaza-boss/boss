@@ -346,6 +346,10 @@
       will-change: transform;
     }
 
+    body.title-above-logos .title-logos {
+      order: 2;
+    }
+
     @keyframes logo-marquee {
       from { transform: translateX(-25%); }
       to { transform: translateX(-50%); }
@@ -418,6 +422,7 @@
     }
 
     .set-meta {
+      display: none;
       position: absolute;
       right: clamp(10px, 2vw, 24px);
       top: 50%;
@@ -2626,6 +2631,9 @@
           <button class="btn small" type="button" id="titleLogoTickerBtn" aria-pressed="false">Бегущая строка логотипов: ВЫКЛ</button>
         </div>
         <div class="field full">
+          <button class="btn small" type="button" id="titlePositionBtn" aria-pressed="false">Название турнира: СНИЗУ</button>
+        </div>
+        <div class="field full">
           <label>Логотипы команд (PNG/SVG/JPG, до 12 МБ — сожмутся автоматически)</label>
           <div class="team-logo-grid">
             <div>
@@ -2869,6 +2877,7 @@
           titleLogos: [],
           titleLogoHeight: 120,
           titleLogoTicker: false,
+          titlePosition: 'below',
           teamLogoA: '',
           teamLogoB: '',
           teamLogoHeight: 56,
@@ -2954,6 +2963,7 @@
           : [];
         s.design.titleLogoHeight = clamp(Math.round(Number(s.design.titleLogoHeight) || 120), 16, 1000);
         s.design.titleLogoTicker = Boolean(s.design.titleLogoTicker);
+        s.design.titlePosition = s.design.titlePosition === 'above' ? 'above' : 'below';
         s.design.teamLogoA = typeof s.design.teamLogoA === 'string' && s.design.teamLogoA.length <= 400000 ? s.design.teamLogoA : '';
         s.design.teamLogoB = typeof s.design.teamLogoB === 'string' && s.design.teamLogoB.length <= 400000 ? s.design.teamLogoB : '';
         s.design.teamLogoHeight = clamp(Math.round(Number(s.design.teamLogoHeight) || 56), 16, 600);
@@ -3041,6 +3051,7 @@
         titleBox: $('.box-title'),
         titleLogos: $('#titleLogos'),
         titleLogoTickerBtn: $('#titleLogoTickerBtn'),
+        titlePositionBtn: $('#titlePositionBtn'),
         logo: $('#logoImg'),
         logoPreview: $('#logoPreview'),
         teamLogo: { A: $('#teamLogoA'), B: $('#teamLogoB') },
@@ -3437,6 +3448,8 @@
         ui.body.style.setProperty('--title-logo-height', d.titleLogoHeight + 'px');
         ui.body.classList.toggle('logo-ticker', Boolean(d.titleLogoTicker));
         updateTitleLogoTickerBtn();
+        ui.body.classList.toggle('title-above-logos', d.titlePosition === 'above');
+        updateTitlePositionBtn();
         ui.body.style.setProperty('--team-logo-height', d.teamLogoHeight + 'px');
         ui.body.style.setProperty('--youtube-logo-height', d.youtubeLogoHeight + 'px');
 
@@ -3531,6 +3544,13 @@
         ui.titleLogoTickerBtn.textContent = 'Бегущая строка логотипов: ' + (on ? 'ВКЛ' : 'ВЫКЛ');
         ui.titleLogoTickerBtn.classList.toggle('on', on);
         ui.titleLogoTickerBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      }
+
+      function updateTitlePositionBtn() {
+        const above = state.design.titlePosition === 'above';
+        ui.titlePositionBtn.textContent = 'Название турнира: ' + (above ? 'СВЕРХУ' : 'СНИЗУ');
+        ui.titlePositionBtn.classList.toggle('on', above);
+        ui.titlePositionBtn.setAttribute('aria-pressed', above ? 'true' : 'false');
       }
 
       let lastTitleLogosKey = null;
@@ -4191,6 +4211,16 @@
         render();
         sync.sendState();
         showToast(state.design.titleLogoTicker ? 'Бегущая строка включена' : 'Бегущая строка выключена');
+      });
+
+      ui.titlePositionBtn.addEventListener('click', () => {
+        state.design.titlePosition = state.design.titlePosition === 'above' ? 'below' : 'above';
+        state.rev = Math.max(Date.now(), state.rev + 1);
+        updateTitlePositionBtn();
+        persist();
+        render();
+        sync.sendState();
+        showToast(state.design.titlePosition === 'above' ? 'Название турнира сверху логотипов' : 'Название турнира снизу логотипов');
       });
 
       [['A', 'fTeamLogoA', 'teamLogoAClear'], ['B', 'fTeamLogoB', 'teamLogoBClear']].forEach(([team, inputId, clearId]) => {
@@ -7496,6 +7526,10 @@ YouTube — сеты (как KeepTheScore)**. У этого табло **сво�
 - **кнопка «Бегущая строка логотипов»** в настройках рядом с размером логотипов:
   по умолчанию ряд стоит на месте, нажатие кнопки включает плавную прокрутку по кругу
   без разрывов; состояние сохраняется для комнаты и сразу применяется на всех табло;
+- **кнопка «Название турнира: СНИЗУ/СВЕРХУ»** там же: переключает редактируемый заголовок
+  между строкой под логотипами и строкой над ними (по умолчанию снизу), состояние тоже
+  сохраняется для комнаты и сразу видно на всех табло;
+- надпись «ПАРТИЯ N · ДО 25» в шапке больше не показывается;
 - логотипы команд A и B: отдельные файлы и общий размер (до 600 px);
   отдельно можно задать логотипы и размер **только для YouTube** (`board4.html` / `board5.html`, до 600 px):
   если YouTube-логотипы не загружены, эти табло используют общие логотипы;
