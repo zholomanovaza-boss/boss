@@ -469,7 +469,7 @@
       'use strict';
 
       const LS_KEY = 'arena-volley-v2';
-      const MAX_TIMEOUTS = 2;
+      const MAX_TIMEOUTS = 0;
 
       const params = new URLSearchParams(location.search);
       const room = (params.get('room') || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40) || 'main';
