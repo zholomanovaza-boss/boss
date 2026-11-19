@@ -2628,6 +2628,9 @@
           <input id="fTitleLogoHeight" name="titleLogoHeight" type="number" min="16" max="1000" step="1">
         </div>
         <div class="field full">
+          <button class="btn small" type="button" id="titleLogosVisibleBtn" aria-pressed="true">Логотипы в шапке: ВКЛ</button>
+        </div>
+        <div class="field full">
           <button class="btn small" type="button" id="titleLogoTickerBtn" aria-pressed="false">Бегущая строка логотипов: ВЫКЛ</button>
         </div>
         <div class="field full">
@@ -2877,6 +2880,7 @@
           titleLogos: [],
           titleLogoHeight: 120,
           titleLogoTicker: false,
+          titleLogosVisible: true,
           titlePosition: 'below',
           teamLogoA: '',
           teamLogoB: '',
@@ -2963,6 +2967,7 @@
           : [];
         s.design.titleLogoHeight = clamp(Math.round(Number(s.design.titleLogoHeight) || 120), 16, 1000);
         s.design.titleLogoTicker = Boolean(s.design.titleLogoTicker);
+        s.design.titleLogosVisible = s.design.titleLogosVisible !== false;
         s.design.titlePosition = s.design.titlePosition === 'above' ? 'above' : 'below';
         s.design.teamLogoA = typeof s.design.teamLogoA === 'string' && s.design.teamLogoA.length <= 400000 ? s.design.teamLogoA : '';
         s.design.teamLogoB = typeof s.design.teamLogoB === 'string' && s.design.teamLogoB.length <= 400000 ? s.design.teamLogoB : '';
@@ -3050,6 +3055,7 @@
         setsRow: $('#midSetsRow'),
         titleBox: $('.box-title'),
         titleLogos: $('#titleLogos'),
+        titleLogosVisibleBtn: $('#titleLogosVisibleBtn'),
         titleLogoTickerBtn: $('#titleLogoTickerBtn'),
         titlePositionBtn: $('#titlePositionBtn'),
         logo: $('#logoImg'),
@@ -3448,6 +3454,7 @@
         ui.body.style.setProperty('--title-logo-height', d.titleLogoHeight + 'px');
         ui.body.classList.toggle('logo-ticker', Boolean(d.titleLogoTicker));
         updateTitleLogoTickerBtn();
+        updateTitleLogosVisibleBtn();
         ui.body.classList.toggle('title-above-logos', d.titlePosition === 'above');
         updateTitlePositionBtn();
         ui.body.style.setProperty('--team-logo-height', d.teamLogoHeight + 'px');
@@ -3539,6 +3546,13 @@
         requestFit();
       }
 
+      function updateTitleLogosVisibleBtn() {
+        const on = state.design.titleLogosVisible !== false;
+        ui.titleLogosVisibleBtn.textContent = 'Логотипы в шапке: ' + (on ? 'ВКЛ' : 'ВЫКЛ');
+        ui.titleLogosVisibleBtn.classList.toggle('on', on);
+        ui.titleLogosVisibleBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      }
+
       function updateTitleLogoTickerBtn() {
         const on = Boolean(state.design.titleLogoTicker);
         ui.titleLogoTickerBtn.textContent = 'Бегущая строка логотипов: ' + (on ? 'ВКЛ' : 'ВЫКЛ');
@@ -3556,11 +3570,12 @@
       let lastTitleLogosKey = null;
       function renderTitleLogos() {
         const logos = (state.design.titleLogos || []).filter(Boolean).slice(0, TITLE_LOGO_COUNT);
-        const key = logos.join('|');
+        const visible = state.design.titleLogosVisible !== false;
+        const key = logos.join('|') + '|' + (visible ? '1' : '0');
         if (key === lastTitleLogosKey) return;
         lastTitleLogosKey = key;
         const row = ui.titleLogos;
-        row.hidden = logos.length === 0;
+        row.hidden = logos.length === 0 || !visible;
         row.replaceChildren();
         if (logos.length) {
           row.style.setProperty('--cell-w', (100 / logos.length) + 'vw');
@@ -3875,6 +3890,7 @@
         pendingLogo = state.design.logo;
         updateLogoPreview();
         f.elements.titleLogoHeight.value = state.design.titleLogoHeight;
+        updateTitleLogosVisibleBtn();
         updateTitleLogoTickerBtn();
         const savedTitleLogos = state.design.titleLogos || [];
         pendingTitleLogos = [];
@@ -4201,6 +4217,16 @@
         const value = clamp(Math.round(Number(ui.settingsForm.elements.titleLogoHeight.value) || 120), 16, 1000);
         ui.body.style.setProperty('--title-logo-height', value + 'px');
         requestFit();
+      });
+
+      ui.titleLogosVisibleBtn.addEventListener('click', () => {
+        state.design.titleLogosVisible = state.design.titleLogosVisible === false;
+        state.rev = Math.max(Date.now(), state.rev + 1);
+        updateTitleLogosVisibleBtn();
+        persist();
+        render();
+        sync.sendState();
+        showToast(state.design.titleLogosVisible ? 'Логотипы в шапке включены' : 'Логотипы в шапке выключены — только название и счёт');
       });
 
       ui.titleLogoTickerBtn.addEventListener('click', () => {
@@ -7523,6 +7549,9 @@ YouTube — сеты (как KeepTheScore)**. У этого табло **сво�
   а редактируемый заголовок матча вынесен на отдельную строку под ними; размер настраивается полем
   «Размер логотипов в заголовке, px» (до 1000 px, автоматически подгоняется под окно,
   чтобы не было переполнения);
+- **кнопка «Логотипы в шапке: ВКЛ/ВЫКЛ»** там же: выключает строку из 10 логотипов,
+  остаются только название турнира, названия команд и счёт (по умолчанию логотипы включены);
+  состояние сохраняется для комнаты и сразу применяется на всех табло;
 - **кнопка «Бегущая строка логотипов»** в настройках рядом с размером логотипов:
   по умолчанию ряд стоит на месте, нажатие кнопки включает плавную прокрутку по кругу
   без разрывов; состояние сохраняется для комнаты и сразу применяется на всех табло;
