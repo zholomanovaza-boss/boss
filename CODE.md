@@ -331,10 +331,20 @@
 
     .logo-strip {
       position: absolute;
-      inset: 0;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 400%;
       display: flex;
       align-items: stretch;
       gap: 0;
+      animation: logo-marquee var(--logo-marquee-duration, 45s) linear infinite;
+      will-change: transform;
+    }
+
+    @keyframes logo-marquee {
+      from { transform: translateX(-25%); }
+      to { transform: translateX(-50%); }
     }
 
     .logo-strip img {
@@ -353,21 +363,6 @@
     .logo-strip--sharp img {
       -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 17%, #000 83%, transparent 100%);
       mask-image: linear-gradient(90deg, transparent 0%, #000 17%, #000 83%, transparent 100%);
-    }
-
-    .logo-strip--sharp img:first-child {
-      -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 83%, transparent 100%);
-      mask-image: linear-gradient(90deg, #000 0%, #000 83%, transparent 100%);
-    }
-
-    .logo-strip--sharp img:last-child {
-      -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 17%, #000 100%);
-      mask-image: linear-gradient(90deg, transparent 0%, #000 17%, #000 100%);
-    }
-
-    .logo-strip--sharp img:only-child {
-      -webkit-mask-image: none;
-      mask-image: none;
     }
 
     .el-logo {
@@ -3526,12 +3521,14 @@
           ['blur', 'sharp'].forEach((kind) => {
             const strip = document.createElement('div');
             strip.className = 'logo-strip logo-strip--' + kind;
-            logos.forEach((src) => {
-              const img = document.createElement('img');
-              img.src = src;
-              img.alt = '';
-              strip.appendChild(img);
-            });
+            for (let copy = 0; copy < 4; copy++) {
+              logos.forEach((src) => {
+                const img = document.createElement('img');
+                img.src = src;
+                img.alt = '';
+                strip.appendChild(img);
+              });
+            }
             row.appendChild(strip);
           });
         }
@@ -7453,10 +7450,11 @@ YouTube — сеты (как KeepTheScore)**. У этого табло **сво�
   у третьего табло (KeepTheScore), четвёртого (YouTube) и пятого (YouTube — сеты)
   цвета и шрифт свои — форма переключается на них автоматически при выборе варианта;
 - логотип: PNG / SVG / JPG, размер и положение слева или справа в шапке табло;
-- **до 10 логотипов в шапке одной сплошной строкой сверху** — загружаются в настройках
-  («Логотипы в заголовке»), идут подряд без зазоров и полей, от края до края шапки;
-  границы между соседними логотипами сглажены мягким переходом, чтобы фон не просвечивал,
-  а редактируемый заголовок матча вынесен на отдельную строку под ними; размер настраивается полем
+- **до 10 логотипов в шапке одной бегущей строкой сверху** — загружаются в настройках
+  («Логотипы в заголовке»), идут подряд без зазоров и полей, от края до края шапки
+  и плавно прокручиваются по кругу без разрывов; границы между соседними логотипами
+  сглажены мягким переходом, чтобы фон не просвечивал, а редактируемый заголовок матча
+  вынесен на отдельную строку под ними; размер настраивается полем
   «Размер логотипов в заголовке, px» (до 1000 px, автоматически подгоняется под окно,
   чтобы не было переполнения);
 - логотипы команд A и B: отдельные файлы и общий размер (до 600 px);
