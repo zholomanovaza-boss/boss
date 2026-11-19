@@ -293,7 +293,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 14px;
+      flex-direction: column;
+      gap: clamp(2px, 0.6vh, 8px);
       padding: calc(clamp(6px, 0.9vw, 10px) * var(--panel-scale, 1)) calc(clamp(16px, 4vw, 40px) * var(--panel-scale, 1));
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.26) 100%);
       background-color: var(--title-bg);
@@ -313,14 +314,12 @@
     }
 
     .title-logos {
-      --cell: min(var(--title-logo-height, 120px), var(--cell-w, 15vw), var(--cell-h, 22vh));
-      display: grid;
-      grid-auto-rows: var(--cell);
-      gap: clamp(3px, 0.4vw, 8px);
-      align-content: center;
-      justify-items: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(1px, 0.2vw, 4px);
+      width: 100%;
       min-width: 0;
-      max-width: 48%;
       overflow: hidden;
       flex: 0 1 auto;
     }
@@ -330,9 +329,12 @@
     }
 
     .title-logos img {
-      width: 100%;
-      height: 100%;
+      height: var(--title-logo-height, 120px);
+      max-height: min(var(--cell-w, 10vw), 26vh);
+      width: auto;
+      max-width: var(--cell-w, 10vw);
       min-width: 0;
+      flex: 0 1 auto;
       object-fit: contain;
       filter: drop-shadow(0 0.3vh 0.9vh rgba(0, 0, 0, 0.4));
       pointer-events: none;
@@ -2340,9 +2342,8 @@
             <img class="el-logo" id="logoImg" alt="Логотип" hidden>
             <span class="winner-badge" id="winnerBadge" hidden>🏆 <span id="winnerName"></span></span>
             <span class="live-badge" id="liveBadge" hidden><span class="live-dot"></span>LIVE</span>
-            <div class="title-logos" id="titleLogosLeft" hidden></div>
+            <div class="title-logos" id="titleLogos" hidden></div>
             <div class="el-title" contenteditable spellcheck="false" id="matchTitle">ВОЛЕЙБОЛ</div>
-            <div class="title-logos" id="titleLogosRight" hidden></div>
             <div class="set-meta" id="setMeta">ПАРТИЯ 1 · ДО 25</div>
           </div>
 
@@ -2997,8 +2998,7 @@
         liveBadge: $('#liveBadge'),
         setsRow: $('#midSetsRow'),
         titleBox: $('.box-title'),
-        titleLogosLeft: $('#titleLogosLeft'),
-        titleLogosRight: $('#titleLogosRight'),
+        titleLogos: $('#titleLogos'),
         logo: $('#logoImg'),
         logoPreview: $('#logoPreview'),
         teamLogo: { A: $('#teamLogoA'), B: $('#teamLogoB') },
@@ -3488,44 +3488,19 @@
         const key = logos.join('|');
         if (key === lastTitleLogosKey) return;
         lastTitleLogosKey = key;
-        const half = Math.ceil(logos.length / 2);
-        [[ui.titleLogosLeft, logos.slice(0, half)], [ui.titleLogosRight, logos.slice(half)]].forEach(([row, items]) => {
-          row.hidden = items.length === 0;
-          row.replaceChildren();
-          if (!items.length) return;
-          const cols = items.length <= 3 ? items.length : items.length === 4 ? 2 : 3;
-          const rows = Math.ceil(items.length / cols);
-          row.style.gridTemplateColumns = `repeat(${cols}, var(--cell))`;
-          row.style.setProperty('--cell-w', (46 / cols) + 'vw');
-          row.style.setProperty('--cell-h', (44 / rows) + 'vh');
-          items.forEach((src, index) => {
+        const row = ui.titleLogos;
+        row.hidden = logos.length === 0;
+        row.replaceChildren();
+        if (logos.length) {
+          row.style.setProperty('--cell-w', (90 / logos.length) + 'vw');
+          logos.forEach((src) => {
             const img = document.createElement('img');
             img.src = src;
             img.alt = '';
-            const rowIndex = Math.floor(index / cols);
-            const lastCount = items.length - rowIndex * cols;
-            if (rowIndex === rows - 1 && lastCount < cols) {
-              const middle = Math.floor(lastCount / 2);
-              img.style.justifySelf = index - rowIndex * cols < middle
-                ? 'end'
-                : index - rowIndex * cols > middle ? 'start' : 'center';
-            }
             row.appendChild(img);
           });
-        });
-        updateTitleLogoCells();
+        }
         requestFit();
-      }
-
-      function updateTitleLogoCells() {
-        const cap = window.innerHeight >= 900 ? 52 : 44;
-        [ui.titleLogosLeft, ui.titleLogosRight].forEach((row) => {
-          const count = row.querySelectorAll('img').length;
-          if (!count) return;
-          const cols = count <= 3 ? count : count === 4 ? 2 : 3;
-          const rows = Math.ceil(count / cols);
-          row.style.setProperty('--cell-h', (cap / rows) + 'vh');
-        });
       }
 
       function requestFit() {
@@ -3612,10 +3587,7 @@
         }
       }
 
-      window.addEventListener('resize', () => {
-        updateTitleLogoCells();
-        requestFit();
-      });
+      window.addEventListener('resize', requestFit);
       window.addEventListener('orientationchange', requestFit);
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(requestFit).catch(() => null);
 
@@ -7446,10 +7418,11 @@ YouTube — сеты (как KeepTheScore)**. У этого табло **сво�
   у третьего табло (KeepTheScore), четвёртого (YouTube) и пятого (YouTube — сеты)
   цвета и шрифт свои — форма переключается на них автоматически при выборе варианта;
 - логотип: PNG / SVG / JPG, размер и положение слева или справа в шапке табло;
-- **до 10 логотипов в шапке по бокам от текста заголовка** — загружаются в настройках
-  («Логотипы в заголовке»), делятся поровну на левую и правую группы, текст остаётся в середине
-  и редактируется прямо на табло; размер настраивается полем «Размер логотипов в заголовке, px»
-  (до 1000 px, автоматически подгоняется под окно, чтобы не было переполнения);
+- **до 10 логотипов в шапке одной плотной строкой сверху** — загружаются в настройках
+  («Логотипы в заголовке»), идут подряд без пустых мест, а редактируемый заголовок матча
+  вынесен на отдельную строку под ними; размер настраивается полем
+  «Размер логотипов в заголовке, px» (до 1000 px, автоматически подгоняется под окно,
+  чтобы не было переполнения);
 - логотипы команд A и B: отдельные файлы и общий размер (до 600 px);
   отдельно можно задать логотипы и размер **только для YouTube** (`board4.html` / `board5.html`, до 600 px):
   если YouTube-логотипы не загружены, эти табло используют общие логотипы;
