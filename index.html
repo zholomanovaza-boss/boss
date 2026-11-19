@@ -648,25 +648,38 @@
       flex-direction: row;
       align-items: baseline;
       justify-content: center;
-      gap: clamp(6px, 0.8vw, 14px);
+      gap: clamp(8px, 1vw, 18px);
       width: 100%;
       min-width: 0;
-      padding: calc(var(--mid-row-pad-y) * var(--panel-scale, 1)) calc(var(--mid-row-pad-x) * var(--panel-scale, 1));
+      padding: calc(clamp(6px, 0.9vw, 14px) * var(--panel-scale, 1)) calc(var(--mid-row-pad-x) * var(--panel-scale, 1));
       text-align: center;
-      background: var(--panel);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.16)), var(--panel);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: var(--mid-row-radius);
-      box-shadow: var(--top-glow), var(--inner-shadow);
+      box-shadow: var(--top-glow), var(--inner-shadow), 0 0.25vh 1.2vh rgba(0, 0, 0, 0.3);
     }
 
     .mid-label {
-      font-size: calc(clamp(12px, 1.1vw, 20px) * var(--mid-scale, 1) * var(--mid-fit, 1));
-      font-weight: 600;
-      line-height: 1.1;
-      letter-spacing: 0.14em;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55em;
+      font-size: calc(clamp(17px, 1.65vw, 30px) * var(--mid-scale, 1) * var(--mid-fit, 1));
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
       white-space: nowrap;
-      opacity: 0.75;
-      text-shadow: var(--label-shadow);
+      color: rgba(255, 255, 255, 0.9);
+      text-shadow: 0 0.12vh 0.5vh rgba(0, 0, 0, 0.65), 0 0 1.4vh rgba(255, 255, 255, 0.2);
+    }
+
+    .mid-label::before,
+    .mid-label::after {
+      content: "";
+      width: 2px;
+      height: 0.9em;
+      flex: 0 0 auto;
+      background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.65), transparent);
     }
 
     .mid-value {
@@ -676,10 +689,11 @@
       min-width: 1ch;
       margin-left: 0;
       font-weight: 900;
-      font-size: calc(clamp(26px, 2.6vw, 44px) * var(--mid-scale, 1) * var(--mid-fit, 1));
+      font-size: calc(clamp(38px, 3.6vw, 64px) * var(--mid-scale, 1) * var(--mid-fit, 1));
       line-height: 1;
+      letter-spacing: -0.02em;
       white-space: nowrap;
-      text-shadow: var(--digit-shadow);
+      text-shadow: 0 0.2vh 1vh rgba(0, 0, 0, 0.7), 0 0 2.2vh rgba(255, 255, 255, 0.3);
     }
 
     .mid-sep {
