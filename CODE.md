@@ -321,6 +321,47 @@
       padding-inline: clamp(8px, 2vw, 24px);
     }
 
+    .title-track {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .title-track .el-title {
+      flex: 0 0 auto;
+    }
+
+    .title-echo {
+      display: none;
+    }
+
+    body.title-ticker .box-title {
+      overflow: hidden;
+    }
+
+    body.title-ticker .title-track {
+      width: max-content;
+      justify-content: flex-start;
+      animation: title-marquee var(--title-marquee-duration, 18s) linear infinite;
+      will-change: transform;
+    }
+
+    body.title-ticker .title-track .el-title {
+      display: block;
+      padding-right: 6vw;
+    }
+
+    body.title-ticker .title-track .title-echo {
+      display: block;
+    }
+
+    @keyframes title-marquee {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
     .title-logos {
       position: relative;
       display: block;
@@ -2424,7 +2465,10 @@
             <span class="winner-badge" id="winnerBadge" hidden>🏆 <span id="winnerName"></span></span>
             <span class="live-badge" id="liveBadge" hidden><span class="live-dot"></span>LIVE</span>
             <div class="title-logos" id="titleLogos" hidden></div>
-            <div class="el-title" contenteditable spellcheck="false" id="matchTitle">ВОЛЕЙБОЛ</div>
+            <div class="title-track" id="titleTrack">
+              <div class="el-title" contenteditable spellcheck="false" id="matchTitle">ВОЛЕЙБОЛ</div>
+              <div class="el-title title-echo" id="matchTitleEcho" aria-hidden="true">ВОЛЕЙБОЛ</div>
+            </div>
             <div class="set-meta" id="setMeta">ПАРТИЯ 1 · ДО 25</div>
           </div>
 
@@ -2676,6 +2720,9 @@
           <button class="btn small" type="button" id="titleLogoTickerBtn" aria-pressed="false">Бегущая строка логотипов: ВЫКЛ</button>
         </div>
         <div class="field full">
+          <button class="btn small" type="button" id="titleTickerBtn" aria-pressed="false">Бегущая строка заголовка: ВЫКЛ</button>
+        </div>
+        <div class="field full">
           <button class="btn small" type="button" id="titlePositionBtn" aria-pressed="false">Название турнира: СНИЗУ</button>
         </div>
         <div class="field full">
@@ -2922,6 +2969,7 @@
           titleLogos: [],
           titleLogoHeight: 120,
           titleLogoTicker: false,
+          titleTicker: false,
           titleLogosVisible: true,
           titlePosition: 'below',
           teamLogoA: '',
@@ -3009,6 +3057,7 @@
           : [];
         s.design.titleLogoHeight = clamp(Math.round(Number(s.design.titleLogoHeight) || 120), 16, 1000);
         s.design.titleLogoTicker = Boolean(s.design.titleLogoTicker);
+        s.design.titleTicker = Boolean(s.design.titleTicker);
         s.design.titleLogosVisible = s.design.titleLogosVisible !== false;
         s.design.titlePosition = s.design.titlePosition === 'above' ? 'above' : 'below';
         s.design.teamLogoA = typeof s.design.teamLogoA === 'string' && s.design.teamLogoA.length <= 400000 ? s.design.teamLogoA : '';
@@ -3092,6 +3141,8 @@
         mid: $('.box-arena-mid'),
         kts: null,
         matchTitle: $('#matchTitle'),
+        matchTitleEcho: $('#matchTitleEcho'),
+        titleTrack: $('#titleTrack'),
         setMeta: $('#setMeta'),
         liveBadge: $('#liveBadge'),
         setsRow: $('#midSetsRow'),
@@ -3099,6 +3150,7 @@
         titleLogos: $('#titleLogos'),
         titleLogosVisibleBtn: $('#titleLogosVisibleBtn'),
         titleLogoTickerBtn: $('#titleLogoTickerBtn'),
+        titleTickerBtn: $('#titleTickerBtn'),
         titlePositionBtn: $('#titlePositionBtn'),
         logo: $('#logoImg'),
         logoPreview: $('#logoPreview'),
@@ -3496,6 +3548,8 @@
         ui.body.style.setProperty('--title-logo-height', d.titleLogoHeight + 'px');
         ui.body.classList.toggle('logo-ticker', Boolean(d.titleLogoTicker));
         updateTitleLogoTickerBtn();
+        ui.body.classList.toggle('title-ticker', Boolean(d.titleTicker));
+        updateTitleTickerBtn();
         updateTitleLogosVisibleBtn();
         ui.body.classList.toggle('title-above-logos', d.titlePosition === 'above');
         updateTitlePositionBtn();
@@ -3552,6 +3606,7 @@
         ui.body.classList.toggle('display', DISPLAY);
 
         ui.matchTitle.textContent = state.titles.match;
+        syncTitleTickerText();
         renderTitleLogos();
 
         ['A', 'B'].forEach((t) => {
@@ -3602,6 +3657,40 @@
         ui.titleLogoTickerBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
       }
 
+      function updateTitleTickerBtn() {
+        const on = Boolean(state.design.titleTicker);
+        ui.titleTickerBtn.textContent = 'Бегущая строка заголовка: ' + (on ? 'ВКЛ' : 'ВЫКЛ');
+        ui.titleTickerBtn.classList.toggle('on', on);
+        ui.titleTickerBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      }
+
+      function syncTitleTickerText() {
+        const text = state.titles.match;
+        const track = ui.titleTrack;
+        if (!track) return;
+
+        // Оставляем только первую копию-эхо, остальные создадим под ширину шапки.
+        Array.from(track.querySelectorAll('.title-echo')).slice(1).forEach((el) => el.remove());
+        if (ui.matchTitleEcho) ui.matchTitleEcho.textContent = text;
+        if (!state.design.titleTicker) return;
+
+        const copyWidth = ui.matchTitle.getBoundingClientRect().width || 1;
+        const boxWidth = ui.titleBox ? ui.titleBox.clientWidth : window.innerWidth;
+        const perHalf = Math.max(1, Math.ceil(boxWidth / copyWidth) + 1);
+        const needed = perHalf * 2 - 1;
+        const echoes = Array.from(track.querySelectorAll('.title-echo'));
+        while (echoes.length < needed) {
+          const clone = document.createElement('div');
+          clone.className = 'el-title title-echo';
+          clone.setAttribute('aria-hidden', 'true');
+          clone.textContent = text;
+          track.appendChild(clone);
+          echoes.push(clone);
+        }
+        const seconds = Math.max(18, Math.min(60, (copyWidth * perHalf) / 80));
+        track.style.setProperty('--title-marquee-duration', seconds + 's');
+      }
+
       function updateTitlePositionBtn() {
         const above = state.design.titlePosition === 'above';
         ui.titlePositionBtn.textContent = 'Название турнира: ' + (above ? 'СВЕРХУ' : 'СНИЗУ');
@@ -3642,6 +3731,7 @@
         fitNameText();
         fitScoreText();
         fitMidText();
+        syncTitleTickerText();
       }
 
       function fitNameText() {
@@ -3864,6 +3954,7 @@
         el.addEventListener('input', () => {
           state.titles[key] = el.textContent.replace(/\s+/g, ' ').trim().slice(0, 40);
           state.rev = Math.max(Date.now(), state.rev + 1);
+          syncTitleTickerText();
           persist();
           sync.sendState();
         });
@@ -4332,6 +4423,16 @@
         render();
         sync.sendState();
         showToast(state.design.titleLogoTicker ? 'Бегущая строка включена' : 'Бегущая строка выключена');
+      });
+
+      ui.titleTickerBtn.addEventListener('click', () => {
+        state.design.titleTicker = !state.design.titleTicker;
+        state.rev = Math.max(Date.now(), state.rev + 1);
+        updateTitleTickerBtn();
+        persist();
+        render();
+        sync.sendState();
+        showToast(state.design.titleTicker ? 'Бегущая строка заголовка включена' : 'Бегущая строка заголовка выключена');
       });
 
       ui.titlePositionBtn.addEventListener('click', () => {
