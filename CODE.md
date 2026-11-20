@@ -593,7 +593,8 @@
     .el-arena-score {
       font-weight: 900;
       font-size: calc(var(--score-font) * var(--score-scale, 1) * var(--score-fit, 1));
-      line-height: 0.82;
+      /* Высота строки равна настоящей высоте цифры — плашка не оставляет пустых полей. */
+      line-height: var(--score-line, 0.82);
       text-shadow: var(--digit-shadow);
       /* Сдвиг из fitScoreText(): цифра становится по настоящему «чернильному» контуру. */
       transform: translate(var(--fit-dx, 0px), var(--fit-dy, 0px));
@@ -1772,7 +1773,7 @@
 
     body.style-kts .el-arena-score {
       text-shadow: none;
-      line-height: 1;
+      line-height: var(--score-line, 1);
     }
 
     body.style-kts .box-arena-center {
@@ -2020,7 +2021,7 @@
 
     body.style-youtube .el-arena-score {
       font-weight: 700;
-      line-height: 1;
+      line-height: var(--score-line, 1);
       text-shadow: none;
     }
 
@@ -3710,6 +3711,8 @@
           // Метрики canvas на мелком шрифте округляются до целых пикселей,
           // поэтому нормализуем их на крупном эталоне и масштабируем линейно.
           const ref = scoreTextMetrics(text, cs.fontFamily, cs.fontWeight, 1000);
+          // Строчка равна контуру цифры: в плашках с авто-высотой иначе остаются поля.
+          el.style.setProperty('--score-line', (ref.inkHeight / 1000).toFixed(5));
           const boxRect = box.getBoundingClientRect();
           const availableWidth = boxRect.width - parseFloat(bcs.paddingLeft) - parseFloat(bcs.paddingRight);
           const availableHeight = boxRect.height - parseFloat(bcs.paddingTop) - parseFloat(bcs.paddingBottom);
