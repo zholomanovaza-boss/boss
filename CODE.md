@@ -261,7 +261,7 @@
     .arena {
       --name-font: clamp(26px, 5.2vw, 92px);
       --score-font: clamp(96px, 15.5vw, 360px);
-      --title-font: clamp(16px, 2.4vw, 40px);
+      --title-font: clamp(26px, 4vw, 68px);
       --set-font: clamp(24px, 3.8vw, 52px);
       --counter-font: clamp(30px, 5vw, 68px);
       --counter-timeout-font: clamp(24px, 3.8vw, 52px);
@@ -300,8 +300,9 @@
       align-items: center;
       justify-content: center;
       flex-direction: column;
-      gap: clamp(2px, 0.6vh, 8px);
-      padding: calc(clamp(6px, 0.9vw, 10px) * var(--panel-scale, 1)) 0;
+      /* Заголовок прижимается к краям плашки: сверху и снизу пустых полей нет. */
+      gap: 0;
+      padding: 0;
       padding-inline: 0 !important;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.26) 100%);
       background-color: var(--title-bg);
@@ -319,6 +320,9 @@
       overflow: hidden;
       text-overflow: ellipsis;
       padding-inline: clamp(8px, 2vw, 24px);
+      /* Строчка равна контуру букв, а сдвиг из fitTitleText() центрирует его. */
+      line-height: var(--title-line, 1.1);
+      transform: translateY(var(--title-dy, 0px));
     }
 
     .title-track {
@@ -330,7 +334,8 @@
     }
 
     .title-track .el-title {
-      flex: 0 0 auto;
+      flex: 0 1 auto;
+      min-width: 0;
     }
 
     .title-echo {
@@ -350,6 +355,7 @@
 
     body.title-ticker .title-track .el-title {
       display: block;
+      flex: 0 0 auto;
       padding-right: 6vw;
     }
 
@@ -1597,11 +1603,11 @@
     }
 
     body[data-layout="scorebug"] .box-title {
-      padding: clamp(3px, 0.6vw, 6px) clamp(10px, 2vw, 20px);
+      padding: 0;
     }
 
     body[data-layout="scorebug"] .el-title {
-      font-size: calc(clamp(11px, 1.2vw, 20px) * var(--title-scale, 1));
+      font-size: calc(clamp(16px, 2.4vw, 34px) * var(--title-scale, 1));
       letter-spacing: 0.22em;
     }
 
@@ -1753,17 +1759,17 @@
     }
 
     body.style-kts .box-title {
-      min-height: clamp(30px, 4.4vw, 78px);
-      padding: clamp(4px, 0.8vw, 14px) 0;
+      min-height: 0;
+      padding: 0;
       background: var(--title-bg);
       border-radius: 0;
       box-shadow: 0 clamp(1px, 0.14vw, 3px) 0 rgba(255, 255, 255, 0.14);
     }
 
     body.style-kts .el-title {
-      font-size: calc(clamp(18px, 3vw, 60px) * var(--title-scale, 1));
+      font-size: calc(clamp(30px, 5vw, 92px) * var(--title-scale, 1));
       font-weight: 400;
-      line-height: 1.1;
+      line-height: var(--title-line, 1.1);
       letter-spacing: 0.03em;
       text-shadow: none;
     }
@@ -1989,17 +1995,17 @@
     }
 
     body.style-youtube .box-title {
-      min-height: clamp(34px, 4.8vw, 84px);
-      padding: clamp(4px, 0.8vw, 14px) clamp(6px, 1vw, 18px);
+      min-height: 0;
+      padding: 0;
       background: var(--title-bg);
       border-radius: 0;
       box-shadow: 0 clamp(2px, 0.3vw, 5px) 0 #ff0033;
     }
 
     body.style-youtube .el-title {
-      font-size: calc(clamp(18px, 3vw, 58px) * var(--title-scale, 1));
+      font-size: calc(clamp(30px, 5vw, 88px) * var(--title-scale, 1));
       font-weight: 700;
-      line-height: 1.1;
+      line-height: var(--title-line, 1.1);
       letter-spacing: 0.06em;
       text-shadow: none;
     }
@@ -2400,8 +2406,8 @@
     /* Заголовок — нижней полосой во всю ширину */
     body.style-ytsets .box-title {
       grid-area: title;
-      min-height: clamp(36px, 9vh, 104px);
-      padding: 0 clamp(70px, 9vw, 170px);
+      min-height: 0;
+      padding: 0;
       background: var(--title-bg);
       background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.18) 100%);
       border-radius: 0;
@@ -2413,9 +2419,9 @@
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
-      font-size: calc(clamp(18px, 3vw, 56px) * var(--title-scale, 1));
+      font-size: calc(clamp(30px, 5vw, 84px) * var(--title-scale, 1));
       font-weight: 400;
-      line-height: 1.45;
+      line-height: var(--title-line, 1.1);
       letter-spacing: 0.04em;
       text-shadow: none;
     }
@@ -3729,6 +3735,7 @@
 
       function requestFit() {
         fitNameText();
+        fitTitleText();
         fitScoreText();
         fitMidText();
         syncTitleTickerText();
@@ -3828,6 +3835,28 @@
           el.style.setProperty('--fit-dx', dx.toFixed(2) + 'px');
           el.style.setProperty('--fit-dy', dy.toFixed(2) + 'px');
         });
+      }
+
+      function fitTitleText() {
+        const el = ui.matchTitle;
+        if (!el) return;
+        const host = ui.titleTrack || el;
+        host.style.removeProperty('--title-line');
+        host.style.removeProperty('--title-dy');
+
+        const cs = getComputedStyle(el);
+        const text = el.textContent || state.titles.match || '—';
+        // Нормализуем на крупном эталоне: метрики canvas на малом шрифте округляются.
+        const ref = scoreTextMetrics(text, cs.fontFamily, cs.fontWeight, 1000);
+        host.style.setProperty('--title-line', (ref.inkHeight / 1000).toFixed(5));
+
+        const now = getComputedStyle(el);
+        const font = parseFloat(now.fontSize);
+        const lineHeight = parseFloat(now.lineHeight) || font * 1.1;
+        const m = scoreTextMetrics(text, now.fontFamily, now.fontWeight, font);
+        const baseline = (lineHeight - (m.fontAsc + m.fontDesc)) / 2 + m.fontAsc;
+        const inkCenterY = baseline + (m.desc - m.asc) / 2;
+        host.style.setProperty('--title-dy', (lineHeight / 2 - inkCenterY).toFixed(2) + 'px');
       }
 
       function fitMidText() {
@@ -3954,6 +3983,7 @@
         el.addEventListener('input', () => {
           state.titles[key] = el.textContent.replace(/\s+/g, ' ').trim().slice(0, 40);
           state.rev = Math.max(Date.now(), state.rev + 1);
+          fitTitleText();
           syncTitleTickerText();
           persist();
           sync.sendState();
