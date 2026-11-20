@@ -287,7 +287,8 @@
         "homeScore mid awayScore";
       column-gap: var(--arena-gap);
       row-gap: 0;
-      padding: clamp(14px, 2.2vw, 34px);
+      /* Нижняя панель прижимается к самому низу табло. */
+      padding: clamp(14px, 2.2vw, 34px) clamp(14px, 2.2vw, 34px) 0;
       border-radius: var(--radius);
       background: transparent;
     }
@@ -1654,7 +1655,7 @@
 
     @media (max-height: 700px) {
       .arena {
-        padding: clamp(10px, 1.6vw, 20px);
+        padding: clamp(10px, 1.6vw, 20px) clamp(10px, 1.6vw, 20px) 0;
         column-gap: clamp(5px, 0.9vw, 10px);
         row-gap: 0;
       }
@@ -1691,7 +1692,7 @@
         "bottom bottom bottom";
       column-gap: var(--arena-gap);
       row-gap: 0;
-      padding: clamp(10px, 1.5vw, 26px);
+      padding: clamp(10px, 1.5vw, 26px) clamp(10px, 1.5vw, 26px) 0;
     }
 
     /* Нижняя полоса: SETS WON / TIME OUTS и партии в один ряд во всю ширину */
@@ -1703,6 +1704,8 @@
       justify-content: space-between;
       gap: clamp(6px, 1vw, 16px);
       min-width: 0;
+      /* Подрезаем 2–3 px типографского переполнения цифр у самого края экрана. */
+      overflow: hidden;
     }
 
     body.style-kts .box-title {
@@ -1823,7 +1826,7 @@
 
     body.style-kts .el-arena-counter-label {
       font-size: calc(clamp(9px, 1.4vw, 24px) * var(--mid-scale, 1));
-      line-height: 1.04;
+      line-height: 1;
       letter-spacing: 0.04em;
       text-shadow: none;
     }
@@ -1928,7 +1931,7 @@
         "bottom bottom bottom";
       column-gap: var(--arena-gap);
       row-gap: 0;
-      padding: clamp(10px, 1.5vw, 26px);
+      padding: clamp(10px, 1.5vw, 26px) clamp(10px, 1.5vw, 26px) 0;
     }
 
     body.style-youtube .box-bottom-bar {
@@ -1939,6 +1942,7 @@
       justify-content: space-between;
       gap: clamp(6px, 1vw, 16px);
       min-width: 0;
+      overflow: hidden;
     }
 
     body.style-youtube .box-title {
@@ -2072,7 +2076,7 @@
 
     body.style-youtube .el-arena-counter-label {
       font-size: calc(clamp(9px, 1.4vw, 24px) * var(--mid-scale, 1));
-      line-height: 1.04;
+      line-height: 1;
       letter-spacing: 0.04em;
       opacity: 0.72;
       text-shadow: none;
