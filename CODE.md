@@ -275,13 +275,18 @@
       flex: 1;
       display: grid;
       font-family: var(--font-family);
+      --arena-gap: clamp(8px, 1.1vw, 16px);
       grid-template-columns: minmax(0, 1fr) clamp(210px, 24vw, 380px) minmax(0, 1fr);
-      grid-template-rows: auto auto minmax(0, 1fr);
+      /* Свободное место уходит в пустую строку над названием: плашки
+         названия и счёта сомкнуты и обжимают свой контент. */
+      grid-template-rows: auto minmax(0, 1fr) auto auto;
       grid-template-areas:
         "title title title"
+        ". . ."
         "homeIdentity heading awayIdentity"
         "homeScore mid awayScore";
-      gap: clamp(8px, 1.1vw, 16px);
+      column-gap: var(--arena-gap);
+      row-gap: 0;
       padding: clamp(14px, 2.2vw, 34px);
       border-radius: var(--radius);
       background: transparent;
@@ -410,7 +415,9 @@
 
     .el-team-logo {
       height: var(--team-logo-height, 64px);
-      max-height: 30vh;
+      /* Логотип не должен растягивать плашку с названием: иначе внутри
+         остаётся пустое место сверху и снизу от текста. */
+      max-height: min(30vh, calc(var(--name-font, 52px) * var(--name-scale, 1) * 0.8));
       max-width: 20%;
       flex: 0 0 auto;
       object-fit: contain;
@@ -547,6 +554,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      align-self: start;
       padding: calc(clamp(8px, 1.2vw, 16px) * var(--panel-scale, 1)) calc(clamp(26px, 6vw, 84px) * var(--panel-scale, 1));
       box-shadow: var(--top-glow), var(--inner-shadow);
       cursor: pointer;
@@ -1351,9 +1359,10 @@
 
     body[data-layout="duel"] .arena {
       grid-template-columns: minmax(0, 1fr) clamp(210px, 24vw, 380px) minmax(0, 1fr);
-      grid-template-rows: auto auto minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 1fr) auto auto;
       grid-template-areas:
         "title title title"
+        ". . ."
         "homeIdentity heading awayIdentity"
         "homeScore mid awayScore";
       column-gap: clamp(10px, 1.6vw, 24px);
@@ -1377,6 +1386,7 @@
     body[data-layout="minimal"] .arena {
       grid-template-areas:
         "title title title"
+        ". . ."
         "homeIdentity heading awayIdentity"
         "homeScore mid awayScore";
     }
@@ -1645,7 +1655,8 @@
     @media (max-height: 700px) {
       .arena {
         padding: clamp(10px, 1.6vw, 20px);
-        gap: clamp(5px, 0.9vw, 10px);
+        column-gap: clamp(5px, 0.9vw, 10px);
+        row-gap: 0;
       }
 
       .controls {
@@ -1669,20 +1680,24 @@
     body.style-kts .arena {
       --name-font: clamp(30px, 6.4vw, 112px);
       --score-font: clamp(150px, 24vw, 440px);
+      --arena-gap: clamp(6px, 1vw, 18px);
       grid-template-columns: minmax(0, 1fr) clamp(44px, 5.2vw, 92px) minmax(0, 1fr);
-      grid-template-rows: auto auto minmax(0, 1fr) auto;
+      grid-template-rows: auto minmax(0, 1fr) auto auto auto;
       grid-template-areas:
         "title title title"
+        ". . ."
         "homeIdentity . awayIdentity"
         "homeScore . awayScore"
         "bottom bottom bottom";
-      gap: clamp(6px, 1vw, 18px);
+      column-gap: var(--arena-gap);
+      row-gap: 0;
       padding: clamp(10px, 1.5vw, 26px);
     }
 
     /* Нижняя полоса: SETS WON / TIME OUTS и партии в один ряд во всю ширину */
     body.style-kts .box-bottom-bar {
       grid-area: bottom;
+      margin-top: var(--arena-gap);
       display: flex;
       align-items: stretch;
       justify-content: space-between;
@@ -1902,19 +1917,23 @@
     body.style-youtube .arena {
       --name-font: clamp(28px, 5.8vw, 100px);
       --score-font: clamp(150px, 24vw, 440px);
+      --arena-gap: clamp(6px, 1vw, 18px);
       grid-template-columns: minmax(0, 1fr) clamp(44px, 5.2vw, 92px) minmax(0, 1fr);
-      grid-template-rows: auto auto minmax(0, 1fr) auto;
+      grid-template-rows: auto minmax(0, 1fr) auto auto auto;
       grid-template-areas:
         "title title title"
+        ". . ."
         "homeIdentity . awayIdentity"
         "homeScore . awayScore"
         "bottom bottom bottom";
-      gap: clamp(6px, 1vw, 18px);
+      column-gap: var(--arena-gap);
+      row-gap: 0;
       padding: clamp(10px, 1.5vw, 26px);
     }
 
     body.style-youtube .box-bottom-bar {
       grid-area: bottom;
+      margin-top: var(--arena-gap);
       display: flex;
       align-items: stretch;
       justify-content: space-between;
