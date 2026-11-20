@@ -261,7 +261,7 @@
     .arena {
       --name-font: clamp(26px, 5.2vw, 92px);
       --score-font: clamp(96px, 15.5vw, 360px);
-      --title-font: clamp(34px, 6vw, 130px);
+      --title-font: clamp(40px, 7.5vw, 180px);
       --set-font: clamp(24px, 3.8vw, 52px);
       --counter-font: clamp(30px, 5vw, 68px);
       --counter-timeout-font: clamp(24px, 3.8vw, 52px);
@@ -304,21 +304,23 @@
       gap: 0;
       padding: 0;
       padding-inline: 0 !important;
+      /* Обрезка только по краям плашки: сам текст не обрезает верх букв. */
+      overflow: hidden;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.26) 100%);
       background-color: var(--title-bg);
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
     }
 
     .el-title {
-      font-size: calc(var(--title-font) * var(--title-scale, 1));
+      font-size: calc(var(--title-font) * var(--title-scale, 1) * var(--title-fit, 1));
       text-transform: uppercase;
       letter-spacing: 0.1em;
       white-space: nowrap;
       text-align: center;
       text-shadow: var(--label-shadow);
       min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      /* Не обрезаем глифы: плашка обрезает только по своим краям. */
+      overflow: visible;
       padding-inline: clamp(8px, 2vw, 24px);
       /* Строчка равна контуру букв, а сдвиг из fitTitleText() центрирует его. */
       line-height: var(--title-line, 1.1);
@@ -1607,7 +1609,7 @@
     }
 
     body[data-layout="scorebug"] .el-title {
-      font-size: calc(clamp(22px, 3.6vw, 52px) * var(--title-scale, 1));
+      font-size: calc(clamp(26px, 4.2vw, 64px) * var(--title-scale, 1) * var(--title-fit, 1));
       letter-spacing: 0.22em;
     }
 
@@ -1767,7 +1769,7 @@
     }
 
     body.style-kts .el-title {
-      font-size: calc(clamp(44px, 9vw, 170px) * var(--title-scale, 1));
+      font-size: calc(clamp(52px, 11vw, 220px) * var(--title-scale, 1) * var(--title-fit, 1));
       font-weight: 400;
       line-height: var(--title-line, 1.1);
       letter-spacing: 0.03em;
@@ -2003,7 +2005,7 @@
     }
 
     body.style-youtube .el-title {
-      font-size: calc(clamp(44px, 9vw, 162px) * var(--title-scale, 1));
+      font-size: calc(clamp(50px, 10.5vw, 210px) * var(--title-scale, 1) * var(--title-fit, 1));
       font-weight: 700;
       line-height: var(--title-line, 1.1);
       letter-spacing: 0.06em;
@@ -2417,9 +2419,8 @@
     body.style-ytsets .el-title {
       max-width: 100%;
       min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      font-size: calc(clamp(44px, 9vw, 156px) * var(--title-scale, 1));
+      overflow: visible;
+      font-size: calc(clamp(48px, 10vw, 200px) * var(--title-scale, 1) * var(--title-fit, 1));
       font-weight: 400;
       line-height: var(--title-line, 1.1);
       letter-spacing: 0.04em;
@@ -3843,15 +3844,36 @@
         const host = ui.titleTrack || el;
         host.style.removeProperty('--title-line');
         host.style.removeProperty('--title-dy');
+        host.style.setProperty('--title-fit', '1');
+
+        // Без бегущей строки длинный заголовок уменьшаем по ширине, чтобы
+        // он полностью помещался в плашку и не обрезался по краям.
+        if (!document.body.classList.contains('title-ticker')) {
+          const MIN_FIT = 0.2;
+          let fit = 1;
+          const available = el.clientWidth;
+          const content = el.scrollWidth;
+          if (available && content > available) {
+            fit = Math.max(MIN_FIT, (available / content) * 0.98);
+            host.style.setProperty('--title-fit', fit.toFixed(4));
+          }
+          let guard = 0;
+          while (fit > MIN_FIT && el.scrollWidth > el.clientWidth + 1 && guard < 48) {
+            fit = Math.max(MIN_FIT, fit * 0.97);
+            host.style.setProperty('--title-fit', fit.toFixed(4));
+            guard += 1;
+          }
+        }
 
         const cs = getComputedStyle(el);
         const text = el.textContent || state.titles.match || '—';
         const font = parseFloat(cs.fontSize);
         if (!font) return;
-        // Строчка равна контуру букв именно на текущем кегле: сверху и снизу
-        // не остаётся пустых полей даже на очень крупном заголовке.
         const m = scoreTextMetrics(text, cs.fontFamily, cs.fontWeight, font);
-        host.style.setProperty('--title-line', (m.inkHeight / font).toFixed(5));
+        // Небольшой запас в 1 px с каждой стороны страхует от обрезки
+        // верхних элементов букв при округлении дробных пикселей.
+        const SAFE = 2;
+        host.style.setProperty('--title-line', ((m.inkHeight + SAFE) / font).toFixed(5));
 
         const now = getComputedStyle(el);
         const lineHeight = parseFloat(now.lineHeight) || font * 1.1;
