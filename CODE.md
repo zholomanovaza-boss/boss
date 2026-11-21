@@ -3866,14 +3866,19 @@
         ui.body.style.setProperty('--score-scale', bodyScaleRaw || '1');
         void boxes[0].offsetHeight;
 
-        teams.forEach((team, i) => {
-          const el = els[i];
+        const fits = teams.map((team, i) => {
           const ref = refs[team].m;
           const ownHeight = base[team].inkH * scale;
           const roomHeight = Number.isFinite(maxRowHeight) ? Math.max(1, maxRowHeight - base[team].padY - 2) : Infinity;
           const roomWidth = base[team].inkW * ref.inkHeight / Math.max(1, ref.inkWidth);
           const targetInk = Math.min(ownHeight, roomHeight, roomWidth);
-          el.style.setProperty('--score-fit', String(Math.max(0.05, Math.min(12, targetInk / ownHeight))));
+          return Math.max(0.05, Math.min(12, targetInk / ownHeight));
+        });
+        // Обе команды должны быть одного размера: плашку ограничивает самая
+        // длинная цифра, иначе двузначный счёт делает одну сторону заметно ниже.
+        const commonFit = Math.min.apply(null, fits);
+        teams.forEach((team, i) => {
+          els[i].style.setProperty('--score-fit', String(commonFit));
         });
         void boxes[0].offsetHeight;
 
