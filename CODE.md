@@ -800,12 +800,11 @@
       width: 100%;
       min-width: 0;
       gap: clamp(3px, 0.4vw, 7px);
-      /* История партий: строчка равна цифре, а отступ уже учитывает
-         panel-scale через --mid-row-pad-y, поэтому шрифт можно заметно
-         увеличить, не раздувая высоту самих строк. */
+      /* История партий остаётся компактнее крупного счёта и нижней панели:
+         исходный шрифт уменьшен, но он по-прежнему масштабируется setScale. */
       line-height: 1;
       padding: var(--mid-row-pad-y) var(--mid-row-pad-x);
-      font-size: calc(clamp(28px, 2.9vw, 50px) * var(--set-scale, 1) * var(--mid-fit, 1));
+      font-size: calc(clamp(20px, 1.9vw, 32px) * var(--set-scale, 1) * var(--mid-fit, 1));
       border-radius: var(--mid-row-radius);
     }
 
