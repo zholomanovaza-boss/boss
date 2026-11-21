@@ -322,9 +322,11 @@
       /* Не обрезаем глифы: плашка обрезает только по своим краям. */
       overflow: visible;
       padding-inline: clamp(8px, 2vw, 24px);
-      /* Строчка равна контуру букв, а сдвиг из fitTitleText() центрирует его. */
+      /* Строчка равна контуру букв, сдвиг из fitTitleText() центрирует его.
+         Лёгкое горизонтальное сжатие даёт более высокие буквы в той же плашке. */
       line-height: var(--title-line, 1.1);
-      transform: translateY(var(--title-dy, 0px));
+      transform: translateY(var(--title-dy, 0px)) scaleX(var(--title-squish, 1));
+      transform-origin: center center;
     }
 
     .title-track {
@@ -336,8 +338,11 @@
     }
 
     .title-track .el-title {
-      flex: 0 1 auto;
+      flex: 0 0 auto;
       min-width: 0;
+      /* Шире плашки ровно на коэффициент сжатия: после scaleX заголовок
+         снова занимает всю ширину, но буквы становятся выше. */
+      width: calc(100% / var(--title-squish, 1));
     }
 
     .title-echo {
@@ -528,11 +533,11 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: clamp(6px, 1vw, 14px);
+      gap: clamp(4px, 0.6vw, 8px);
       width: 100%;
       min-width: 0;
       max-width: 100%;
-      padding: calc(clamp(4px, 0.7vw, 9px) * var(--panel-scale, 1)) calc(clamp(10px, 1.6vw, 26px) * var(--panel-scale, 1));
+      padding: calc(clamp(4px, 0.7vw, 9px) * var(--panel-scale, 1)) calc(clamp(8px, 1.1vw, 18px) * var(--panel-scale, 1));
       box-shadow: var(--top-glow), var(--inner-shadow);
     }
 
@@ -560,8 +565,8 @@
 
     .el-serve {
       display: block;
-      width: clamp(20px, 2.6vw, 38px);
-      height: clamp(20px, 2.6vw, 38px);
+      width: clamp(16px, 1.8vw, 26px);
+      height: clamp(16px, 1.8vw, 26px);
       flex: 0 0 auto;
       opacity: 0;
       transform: scale(0.7);
@@ -586,7 +591,7 @@
     .box-arena-name::after {
       content: '';
       flex: 0 0 auto;
-      width: clamp(20px, 2.6vw, 38px);
+      width: clamp(16px, 1.8vw, 26px);
     }
 
     .el-arena-name {
@@ -3899,6 +3904,9 @@
         const el = ui.matchTitle;
         if (!el) return;
         const host = ui.titleTrack || el;
+        const ticker = document.body.classList.contains('title-ticker');
+        const SQUISH = ticker ? 1 : 0.85;
+        host.style.setProperty('--title-squish', String(SQUISH));
         host.style.removeProperty('--title-line');
         host.style.removeProperty('--title-dy');
         host.style.removeProperty('--title-spacing');
@@ -3906,7 +3914,7 @@
 
         // Без бегущей строки длинный заголовок уменьшаем по ширине, чтобы
         // он полностью помещался в плашку и не обрезался по краям.
-        if (!document.body.classList.contains('title-ticker')) {
+        if (!ticker) {
           const MIN_FIT = 0.2;
           const measure = () => {
             host.style.setProperty('--title-fit', '1');
