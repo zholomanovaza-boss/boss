@@ -314,7 +314,7 @@
     .el-title {
       font-size: calc(var(--title-font) * var(--title-scale, 1) * var(--title-fit, 1));
       text-transform: uppercase;
-      letter-spacing: 0.1em;
+      letter-spacing: var(--title-spacing, 0.1em);
       white-space: nowrap;
       text-align: center;
       text-shadow: var(--label-shadow);
@@ -3819,9 +3819,12 @@
           // Задача: при 100% видимая цифра занимает всю высоту плашки.
           // Ползунок сам масштабирует шрифт, поэтому подгоняем к высоте один раз.
           const targetHeight = availableHeight;
+          // Ползунок масштабирует шрифт ещё и через --score-scale, поэтому оба
+          // ограничения должны учитывать scale: иначе при 150% цифра выходит
+          // за пределы плашки и обрезается по бокам.
           const fit = Math.max(0.05, Math.min(12,
-            targetHeight / (baseFont * ref.inkHeight / 1000),
-            availableWidth / (baseFont * ref.inkWidth / 1000)));
+            targetHeight / (baseFont * scale * ref.inkHeight / 1000),
+            availableWidth / (baseFont * scale * ref.inkWidth / 1000)));
           el.style.setProperty('--score-fit', String(fit));
 
           // Подравниваем по настоящему контуру глифа, а не по строчке шрифта.
@@ -3844,19 +3847,28 @@
         const host = ui.titleTrack || el;
         host.style.removeProperty('--title-line');
         host.style.removeProperty('--title-dy');
+        host.style.removeProperty('--title-spacing');
         host.style.setProperty('--title-fit', '1');
 
         // Без бегущей строки длинный заголовок уменьшаем по ширине, чтобы
         // он полностью помещался в плашку и не обрезался по краям.
         if (!document.body.classList.contains('title-ticker')) {
           const MIN_FIT = 0.2;
-          let fit = 1;
-          const available = el.clientWidth;
-          const content = el.scrollWidth;
-          if (available && content > available) {
-            fit = Math.max(MIN_FIT, (available / content) * 0.98);
-            host.style.setProperty('--title-fit', fit.toFixed(4));
+          const measure = () => {
+            host.style.setProperty('--title-fit', '1');
+            const available = el.clientWidth;
+            const content = el.scrollWidth;
+            return available && content > available ? Math.max(MIN_FIT, (available / content) * 0.98) : 1;
+          };
+          let fit = measure();
+          // У слишком длинного заголовка плотный межбуквенный интервал даёт
+          // заметно более крупные буквы, а значит и более высокую плашку —
+          // без пустых полей сверху и снизу.
+          if (fit < 0.95) {
+            host.style.setProperty('--title-spacing', '0.02em');
+            fit = measure();
           }
+          host.style.setProperty('--title-fit', fit.toFixed(4));
           let guard = 0;
           while (fit > MIN_FIT && el.scrollWidth > el.clientWidth + 1 && guard < 48) {
             fit = Math.max(MIN_FIT, fit * 0.97);
