@@ -2667,7 +2667,7 @@
             <label class="scale-item">
               <span>Счёт</span>
               <output data-scale-out="scoreScale">100%</output>
-              <input type="range" name="scoreScale" min="50" max="300" step="5" value="100">
+              <input type="range" name="scoreScale" min="50" max="500" step="5" value="100">
             </label>
             <label class="scale-item">
               <span>Блок Sets Won / Time Outs</span>
@@ -2936,7 +2936,7 @@
       const SCALE_LIMITS = {
         titleScale: [50, 150],
         nameScale: [50, 150],
-        scoreScale: [50, 300],
+        scoreScale: [50, 500],
         midScale: [50, 150],
         setScale: [50, 150],
         panelScale: [70, 140]
@@ -3797,52 +3797,96 @@
       }
 
       function fitScoreText() {
-        ['A', 'B'].forEach((team) => {
-          const el = ui.scoreEl[team];
-          const box = ui.scoreBox[team];
-          el.style.setProperty('--score-fit', '1');
-          el.style.removeProperty('--fit-dx');
-          el.style.removeProperty('--fit-dy');
+        const teams = ['A', 'B'];
+        const els = teams.map((team) => ui.scoreEl[team]);
+        const boxes = teams.map((team) => ui.scoreBox[team]);
+        if (els.some((el) => !el) || boxes.some((box) => !box)) return;
 
+        const bodyScaleRaw = getComputedStyle(ui.body).getPropertyValue('--score-scale').trim();
+        const scale = Math.min(5, Math.max(0.5, Number(bodyScaleRaw) || 1));
+        const refs = {};
+        teams.forEach((team, i) => {
+          const el = els[i];
           const cs = getComputedStyle(el);
-          const bcs = getComputedStyle(box);
-          const scale = Math.min(3, Math.max(0.5, Number(getComputedStyle(ui.body).getPropertyValue('--score-scale')) || 1));
-          const baseFont = parseFloat(cs.fontSize) / scale;
-          if (!baseFont) return;
-
           const text = el.textContent || '0';
           // Метрики canvas на мелком шрифте округляются до целых пикселей,
           // поэтому нормализуем их на крупном эталоне и масштабируем линейно.
-          const ref = scoreTextMetrics(text, cs.fontFamily, cs.fontWeight, 1000);
+          refs[team] = { text, m: scoreTextMetrics(text, cs.fontFamily, cs.fontWeight, 1000) };
           // Строчка равна контуру цифры: в плашках с авто-высотой иначе остаются поля.
-          el.style.setProperty('--score-line', (ref.inkHeight / 1000).toFixed(5));
-          const boxRect = box.getBoundingClientRect();
-          const availableWidth = boxRect.width - parseFloat(bcs.paddingLeft) - parseFloat(bcs.paddingRight);
-          const availableHeight = boxRect.height - parseFloat(bcs.paddingTop) - parseFloat(bcs.paddingBottom);
-          if (availableWidth <= 0 || availableHeight <= 0) return;
+          el.style.setProperty('--score-line', (refs[team].m.inkHeight / 1000).toFixed(5));
+        });
 
-          // Задача: при 100% видимая цифра занимает всю высоту плашки.
-          // Ползунок сам масштабирует шрифт, поэтому подгоняем к высоте один раз.
-          const targetHeight = availableHeight;
-          // Ползунок масштабирует шрифт ещё и через --score-scale, поэтому оба
-          // ограничения должны учитывать scale: иначе при 150% цифра выходит
-          // за пределы плашки и обрезается по бокам.
-          const fit = Math.max(0.05, Math.min(12,
-            targetHeight / (baseFont * scale * ref.inkHeight / 1000),
-            availableWidth / (baseFont * scale * ref.inkWidth / 1000)));
-          el.style.setProperty('--score-fit', String(fit));
+        // Заморозим масштаб и подгонку: иначе высота плашки зависит от цифры,
+        // а цифра — от высоты плашки. Ползунок начинает всё время «разгонять» размер.
+        ui.body.style.setProperty('--score-scale', '1');
+        els.forEach((el) => el.style.setProperty('--score-fit', '1'));
+        void boxes[0].offsetHeight;
 
-          // Подравниваем по настоящему контуру глифа, а не по строчке шрифта.
-          const finalFont = baseFont * scale * fit;
-          const nowCs = getComputedStyle(el);
-          const lineHeight = parseFloat(nowCs.lineHeight) || finalFont * 1.2;
-          const m = scoreTextMetrics(text, nowCs.fontFamily, nowCs.fontWeight, finalFont);
+        const base = {};
+        let maxRowHeight = Infinity;
+        const arena = boxes[0].closest('.arena');
+        if (arena) {
+          const acs = getComputedStyle(arena);
+          const ar = arena.getBoundingClientRect();
+          const contentH = ar.height - parseFloat(acs.paddingTop) - parseFloat(acs.paddingBottom);
+          const rowSizes = acs.gridTemplateRows.split(' ').map(parseFloat).filter(Number.isFinite);
+          const gap = parseFloat(acs.rowGap) || 0;
+          const gridTop = ar.top + parseFloat(acs.paddingTop);
+          const rowTop = (i) => gridTop + rowSizes.slice(0, i).reduce((sum, v) => sum + v + gap, 0);
+          const findRow = (y) => rowSizes.findIndex((h, i) => y >= rowTop(i) - 2 && y <= rowTop(i) + h + 2);
+          const scoreRect = boxes[0].getBoundingClientRect();
+          const scoreRow = Math.max(0, findRow(scoreRect.top + scoreRect.height / 2));
+
+          // Все строки, где есть видимый контент, должны остаться на месте.
+          // Пустая строка-распорка (1fr) в расчёт не идёт — она сжимается первой.
+          const fixedRows = new Set();
+          Array.from(arena.children).forEach((child) => {
+            const r = child.getBoundingClientRect();
+            if (r.height <= 0 || r.width <= 0) return;
+            const row = findRow(r.top + r.height / 2);
+            if (row >= 0 && row !== scoreRow) fixedRows.add(row);
+          });
+          let fixedH = 0;
+          fixedRows.forEach((i) => { fixedH += rowSizes[i] || 0; });
+          maxRowHeight = Math.max(0, contentH - fixedH - gap * Math.max(0, rowSizes.length - 1));
+        }
+
+        teams.forEach((team, i) => {
+          const box = boxes[i];
+          const bcs = getComputedStyle(box);
+          const br = box.getBoundingClientRect();
+          base[team] = {
+            padY: parseFloat(bcs.paddingTop) + parseFloat(bcs.paddingBottom),
+            inkH: Math.max(1, br.height - parseFloat(bcs.paddingTop) - parseFloat(bcs.paddingBottom)),
+            inkW: Math.max(1, br.width - parseFloat(bcs.paddingLeft) - parseFloat(bcs.paddingRight))
+          };
+        });
+
+        ui.body.style.setProperty('--score-scale', bodyScaleRaw || '1');
+        void boxes[0].offsetHeight;
+
+        teams.forEach((team, i) => {
+          const el = els[i];
+          const ref = refs[team].m;
+          const ownHeight = base[team].inkH * scale;
+          const roomHeight = Number.isFinite(maxRowHeight) ? Math.max(1, maxRowHeight - base[team].padY - 2) : Infinity;
+          const roomWidth = base[team].inkW * ref.inkHeight / Math.max(1, ref.inkWidth);
+          const targetInk = Math.min(ownHeight, roomHeight, roomWidth);
+          el.style.setProperty('--score-fit', String(Math.max(0.05, Math.min(12, targetInk / ownHeight))));
+        });
+        void boxes[0].offsetHeight;
+
+        // Подравниваем по настоящему контуру глифа, а не по строчке шрифта.
+        teams.forEach((team, i) => {
+          const el = els[i];
+          const cs = getComputedStyle(el);
+          const font = parseFloat(cs.fontSize) || 1;
+          const lineHeight = parseFloat(cs.lineHeight) || font * 1.2;
+          const m = scoreTextMetrics(refs[team].text, cs.fontFamily, cs.fontWeight, font);
           const baseline = (lineHeight - (m.fontAsc + m.fontDesc)) / 2 + m.fontAsc;
           const inkCenterY = baseline + (m.desc - m.asc) / 2;
-          const dx = m.advance / 2 - m.inkCenterX;
-          const dy = lineHeight / 2 - inkCenterY;
-          el.style.setProperty('--fit-dx', dx.toFixed(2) + 'px');
-          el.style.setProperty('--fit-dy', dy.toFixed(2) + 'px');
+          el.style.setProperty('--fit-dx', (m.advance / 2 - m.inkCenterX).toFixed(2) + 'px');
+          el.style.setProperty('--fit-dy', (lineHeight / 2 - inkCenterY).toFixed(2) + 'px');
         });
       }
 
