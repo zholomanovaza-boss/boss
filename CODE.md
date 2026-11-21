@@ -3041,7 +3041,8 @@
         s.design.font = FONT_KEYS.includes(s.design.font) ? s.design.font : base.design.font;
         s.design.layout = LAYOUT_KEYS.includes(s.design.layout) ? s.design.layout : base.design.layout;
         SCALE_KEYS.forEach((key) => {
-          s.design[key] = clamp(Math.round(Number(s.design[key]) || 100), 50, 150);
+          const [min, max] = SCALE_LIMITS[key];
+          s.design[key] = clamp(Math.round(Number(s.design[key]) || 100), min, max);
         });
         COLOR_KEYS.forEach((key) => {
           s.design[key] = /^#[0-9a-fA-F]{6}$/.test(String(s.design[key] || '')) ? s.design[key] : base.design[key];
