@@ -3898,7 +3898,12 @@
         if (!el) return;
         const host = ui.titleTrack || el;
         const ticker = document.body.classList.contains('title-ticker');
-        const SQUISH = ticker ? 1 : 0.85;
+        // Короткие названия оставляем без сжатия. Длинный заголовок сжимаем
+        // сильнее: так буквы становятся заметно выше в той же плашке.
+        host.style.setProperty('--title-squish', '1');
+        host.style.setProperty('--title-fit', '1');
+        const longTitle = !ticker && el.scrollWidth > el.clientWidth + 1;
+        const SQUISH = longTitle ? 0.72 : 1;
         host.style.setProperty('--title-squish', String(SQUISH));
         host.style.removeProperty('--title-line');
         host.style.removeProperty('--title-dy');
