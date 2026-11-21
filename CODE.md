@@ -1857,28 +1857,28 @@
     }
 
     body.style-kts .box-arena-counter {
-      min-width: clamp(46px, 4.6vw, 76px);
+      min-width: clamp(52px, 5.2vw, 88px);
       gap: 0;
     }
 
     body.style-kts .el-arena-counter-value {
       width: auto;
-      min-width: clamp(32px, 4vw, 64px);
+      min-width: clamp(36px, 4.5vw, 72px);
       min-height: 0;
       padding: 0 clamp(5px, 0.6vw, 12px);
       background: rgba(0, 0, 0, 0.35);
       box-shadow: 0 clamp(1px, 0.2vw, 4px) clamp(2px, 0.4vw, 7px) rgba(0, 0, 0, 0.45);
-      font-size: calc(clamp(22px, 3.6vw, 58px) * var(--mid-scale, 1));
+      font-size: calc(clamp(30px, 5vw, 76px) * var(--mid-scale, 1));
       line-height: 1.1;
       text-shadow: none;
     }
 
     body.style-kts .counter-timeouts .el-arena-counter-value {
-      font-size: calc(clamp(22px, 3.6vw, 58px) * var(--mid-scale, 1));
+      font-size: calc(clamp(30px, 5vw, 76px) * var(--mid-scale, 1));
     }
 
     body.style-kts .el-arena-counter-label {
-      font-size: calc(clamp(9px, 1.4vw, 24px) * var(--mid-scale, 1));
+      font-size: calc(clamp(12px, 1.8vw, 28px) * var(--mid-scale, 1));
       line-height: 1;
       letter-spacing: 0.04em;
       text-shadow: none;
@@ -1901,13 +1901,13 @@
     body.style-kts .box-arena-set {
       flex: 1 1 0;
       min-width: 0;
-      min-height: clamp(38px, 6vw, 96px);
+      min-height: clamp(48px, 7.5vw, 116px);
       padding: 0 clamp(4px, 0.6vw, 12px);
       gap: clamp(2px, 0.4vw, 8px);
       background: rgba(0, 0, 0, 0.35);
       border-radius: 0;
       box-shadow: 0 clamp(1px, 0.2vw, 4px) clamp(2px, 0.4vw, 7px) rgba(0, 0, 0, 0.45);
-      font-size: calc(clamp(15px, 3vw, 50px) * var(--set-scale, 1));
+      font-size: calc(clamp(24px, 4.2vw, 66px) * var(--set-scale, 1));
       font-weight: 600;
     }
 
@@ -2101,25 +2101,25 @@
     }
 
     body.style-youtube .box-arena-counter {
-      min-width: clamp(46px, 4.6vw, 76px);
+      min-width: clamp(52px, 5.2vw, 88px);
       gap: clamp(2px, 0.35vw, 6px);
     }
 
     body.style-youtube .el-arena-counter-value {
       width: auto;
-      min-width: clamp(32px, 4vw, 64px);
+      min-width: clamp(36px, 4.5vw, 72px);
       min-height: 0;
       padding: 0 clamp(5px, 0.6vw, 12px);
       background: color-mix(in srgb, var(--text) 14%, transparent);
       border-radius: clamp(3px, 0.5vw, 8px);
       box-shadow: none;
-      font-size: calc(clamp(22px, 3.6vw, 58px) * var(--mid-scale, 1));
+      font-size: calc(clamp(30px, 5vw, 76px) * var(--mid-scale, 1));
       line-height: 1.1;
       text-shadow: none;
     }
 
     body.style-youtube .counter-timeouts .el-arena-counter-value {
-      font-size: calc(clamp(22px, 3.6vw, 58px) * var(--mid-scale, 1));
+      font-size: calc(clamp(30px, 5vw, 76px) * var(--mid-scale, 1));
     }
 
     body.style-youtube .counter-timeouts .el-arena-counter-value:hover {
@@ -2127,7 +2127,7 @@
     }
 
     body.style-youtube .el-arena-counter-label {
-      font-size: calc(clamp(9px, 1.4vw, 24px) * var(--mid-scale, 1));
+      font-size: calc(clamp(12px, 1.8vw, 28px) * var(--mid-scale, 1));
       line-height: 1;
       letter-spacing: 0.04em;
       opacity: 0.72;
@@ -2151,13 +2151,13 @@
     body.style-youtube .box-arena-set {
       flex: 1 1 0;
       min-width: 0;
-      min-height: clamp(38px, 6vw, 96px);
+      min-height: clamp(48px, 7.5vw, 116px);
       padding: 0 clamp(4px, 0.6vw, 12px);
       gap: clamp(2px, 0.4vw, 8px);
       background: color-mix(in srgb, var(--text) 14%, transparent);
       border-radius: clamp(3px, 0.5vw, 8px);
       box-shadow: none;
-      font-size: calc(clamp(15px, 3vw, 50px) * var(--set-scale, 1));
+      font-size: calc(clamp(24px, 4.2vw, 66px) * var(--set-scale, 1));
       font-weight: 600;
     }
 
