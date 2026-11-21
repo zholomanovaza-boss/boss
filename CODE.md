@@ -1424,10 +1424,12 @@
 
     body[data-layout="duel"] .arena {
       grid-template-columns: minmax(0, 1fr) clamp(210px, 24vw, 380px) minmax(0, 1fr);
-      grid-template-rows: auto minmax(0, 1fr) auto auto;
+      /* Заголовок, названия и счёт идут до краёв экрана без пустых полей
+         и без пустой строки: свободная высота уходит в панели счёта. */
+      padding: 0;
+      grid-template-rows: auto auto minmax(0, 1fr);
       grid-template-areas:
         "title title title"
-        ". . ."
         "homeIdentity heading awayIdentity"
         "homeScore mid awayScore";
       column-gap: clamp(10px, 1.6vw, 24px);
@@ -1449,9 +1451,10 @@
     }
 
     body[data-layout="minimal"] .arena {
+      padding: 0;
+      grid-template-rows: auto auto minmax(0, 1fr);
       grid-template-areas:
         "title title title"
-        ". . ."
         "homeIdentity heading awayIdentity"
         "homeScore mid awayScore";
     }
