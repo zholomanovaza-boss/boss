@@ -277,13 +277,13 @@
       font-family: var(--font-family);
       --arena-gap: clamp(8px, 1.1vw, 16px);
       grid-template-columns: minmax(0, 1fr) clamp(210px, 24vw, 380px) minmax(0, 1fr);
-      /* Свободное место уходит в пустую строку над названием: плашки
-         названия и счёта сомкнуты и обжимают свой контент. */
+      /* Названия прижаты к заголовку, свободное место остаётся ниже их,
+         а плашки счёта по-прежнему прижаты к низу табло. */
       grid-template-rows: auto minmax(0, 1fr) auto auto;
       grid-template-areas:
         "title title title"
-        ". . ."
-        "homeIdentity heading awayIdentity"
+        "homeIdentity . awayIdentity"
+        ". heading ."
         "homeScore mid awayScore";
       column-gap: var(--arena-gap);
       row-gap: 0;
@@ -516,6 +516,7 @@
     .box-arena-identity {
       display: flex;
       align-items: center;
+      align-self: start;
       min-width: 0;
     }
 
