@@ -260,7 +260,7 @@
 
     .arena {
       --name-font: clamp(26px, 5.2vw, 92px);
-      --score-font: clamp(96px, 15.5vw, 360px);
+      --score-font: clamp(110px, 18vw, 420px);
       --title-font: clamp(40px, 7.5vw, 180px);
       --set-font: clamp(24px, 3.8vw, 52px);
       --counter-font: clamp(30px, 5vw, 68px);
@@ -607,7 +607,7 @@
       align-self: start;
       /* Крупная цифра может выходить за строчку — держим её внутри плашки. */
       overflow: hidden;
-      padding: calc(clamp(8px, 1.2vw, 16px) * var(--panel-scale, 1)) calc(clamp(26px, 6vw, 84px) * var(--panel-scale, 1));
+      padding: calc(clamp(8px, 1.2vw, 16px) * var(--panel-scale, 1)) calc(clamp(16px, 3.6vw, 52px) * var(--panel-scale, 1));
       box-shadow: var(--top-glow), var(--inner-shadow);
       cursor: pointer;
       user-select: none;
