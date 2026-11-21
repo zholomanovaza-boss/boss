@@ -1427,8 +1427,8 @@
       grid-template-rows: auto minmax(0, 1fr) auto auto;
       grid-template-areas:
         "title title title"
-        "homeIdentity . awayIdentity"
-        ". heading ."
+        ". . ."
+        "homeIdentity heading awayIdentity"
         "homeScore mid awayScore";
       column-gap: clamp(10px, 1.6vw, 24px);
     }
@@ -1451,8 +1451,8 @@
     body[data-layout="minimal"] .arena {
       grid-template-areas:
         "title title title"
-        "homeIdentity . awayIdentity"
-        ". heading ."
+        ". . ."
+        "homeIdentity heading awayIdentity"
         "homeScore mid awayScore";
     }
 
