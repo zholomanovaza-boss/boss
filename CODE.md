@@ -3934,6 +3934,7 @@
         if (!el) return;
         const host = ui.titleTrack || el;
         const ticker = document.body.classList.contains('title-ticker');
+        const text = el.textContent || state.titles.match || '—';
         // Короткие названия оставляем без сжатия. Длинный заголовок сжимаем
         // сильнее: так буквы становятся заметно выше в той же плашке.
         host.style.setProperty('--title-squish', '1');
@@ -3946,9 +3947,26 @@
         host.style.removeProperty('--title-spacing');
         host.style.setProperty('--title-fit', '1');
 
-        // Без бегущей строки длинный заголовок уменьшаем по ширине, чтобы
-        // он полностью помещался в плашку и не обрезался по краям.
-        if (!ticker) {
+        const boxWidth = ui.titleBox ? ui.titleBox.clientWidth : window.innerWidth;
+
+        if (ticker) {
+          // В бегущей строке копия должна быть лишь немного шире экрана:
+          // так почти весь заголовок остаётся виден и быстро возвращается.
+          const MIN_FIT = 0.06;
+          const target = Math.max(320, boxWidth * 1.2);
+          // Ширина track складывается из всех копий, поэтому меряем одну копию
+          // по тексту, а не по DOM-прямоугольнику.
+          const cs0 = getComputedStyle(el);
+          const font0 = parseFloat(cs0.fontSize) || 1;
+          const spacing = parseFloat(cs0.letterSpacing) || 0;
+          const pad = (parseFloat(cs0.paddingLeft) || 0) + (parseFloat(cs0.paddingRight) || 0);
+          const metrics = scoreTextMetrics(text, cs0.fontFamily, cs0.fontWeight, font0);
+          const natural = metrics.advance + spacing * Math.max(0, text.length - 1) + pad;
+          const fit = Math.max(MIN_FIT, Math.min(1, (target / natural) * 0.98));
+          host.style.setProperty('--title-fit', fit.toFixed(4));
+        } else {
+          // Без бегущей строки длинный заголовок уменьшаем по ширине, чтобы
+          // он полностью помещался в плашку и не обрезался по краям.
           const MIN_FIT = 0.2;
           const measure = () => {
             host.style.setProperty('--title-fit', '1');
@@ -3974,7 +3992,6 @@
         }
 
         const cs = getComputedStyle(el);
-        const text = el.textContent || state.titles.match || '—';
         const font = parseFloat(cs.fontSize);
         if (!font) return;
         const m = scoreTextMetrics(text, cs.fontFamily, cs.fontWeight, font);
