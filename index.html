@@ -286,6 +286,13 @@
       background: transparent;
     }
 
+    /* Базовый макет тоже должен заполнять табло до краёв: без верхнего,
+       левого и правого пустого поля. Свободная высота уходит в плашки. */
+    body[data-layout="arena"] .arena {
+      padding: 0;
+      column-gap: clamp(10px, 1.6vw, 24px);
+    }
+
     .box-title {
       grid-area: title;
       position: relative;
