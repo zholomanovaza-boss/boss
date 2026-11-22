@@ -550,9 +550,26 @@
       justify-content: flex-end;
     }
 
-    /* Логотип команды B прижат к левому краю плашки, перед подачей и названием. */
+    /* Логотипы команд: кнопка в настройках переключает слева/справа. */
+    .box-arena-name .el-team-logo { order: 1; }
+    .box-arena-name .el-serve { order: 2; }
+    .box-arena-name .el-arena-name { order: 3; }
+    .box-arena-name::after { order: 4; }
+    .box-arena-identity-home .box-arena-name,
     .box-arena-identity-away .box-arena-name {
       justify-content: flex-start !important;
+    }
+    body.team-logo-right .box-arena-name::after { order: 0; }
+    body.team-logo-right .box-arena-name .el-arena-name { order: 1; }
+    body.team-logo-right .box-arena-name .el-serve { order: 2; }
+    body.team-logo-right .box-arena-name .el-team-logo { order: 3; }
+    body.team-logo-right .box-arena-identity-home .box-arena-name,
+    body.team-logo-right .box-arena-identity-away .box-arena-name {
+      justify-content: flex-end !important;
+    }
+    body.team-logo-right.style-ytsets .box-arena-name {
+      padding-left: clamp(58px, 9vw, 190px);
+      padding-right: clamp(12px, 2vw, 42px);
     }
 
     .box-arena-name {
@@ -2794,6 +2811,9 @@
             </div>
           </div>
         </div>
+        <div class="field full">
+          <button class="btn small" type="button" id="teamLogoPosBtn" aria-pressed="false">Логотипы команд: СЛЕВА</button>
+        </div>
         <div class="field">
           <label for="fTeamLogoHeight">Размер логотипов команд, px</label>
           <input id="fTeamLogoHeight" name="teamLogoHeight" type="number" min="16" max="600" step="1">
@@ -3024,6 +3044,7 @@
           teamLogoA: '',
           teamLogoB: '',
           teamLogoHeight: 56,
+          teamLogoPos: 'left',
           youtubeLogoA: '',
           youtubeLogoB: '',
           youtubeLogoHeight: 56,
@@ -3114,6 +3135,7 @@
         s.design.teamLogoA = typeof s.design.teamLogoA === 'string' && s.design.teamLogoA.length <= 400000 ? s.design.teamLogoA : '';
         s.design.teamLogoB = typeof s.design.teamLogoB === 'string' && s.design.teamLogoB.length <= 400000 ? s.design.teamLogoB : '';
         s.design.teamLogoHeight = clamp(Math.round(Number(s.design.teamLogoHeight) || 56), 16, 600);
+        s.design.teamLogoPos = s.design.teamLogoPos === 'right' ? 'right' : 'left';
         s.design.youtubeLogoHeight = clamp(Math.round(Number(s.design.youtubeLogoHeight) || s.design.teamLogoHeight), 16, 600);
         s.design.youtubeLogoA = typeof s.design.youtubeLogoA === 'string' && s.design.youtubeLogoA.length <= 400000 ? s.design.youtubeLogoA : '';
         s.design.youtubeLogoB = typeof s.design.youtubeLogoB === 'string' && s.design.youtubeLogoB.length <= 400000 ? s.design.youtubeLogoB : '';
@@ -3208,6 +3230,7 @@
         logoPreview: $('#logoPreview'),
         teamLogo: { A: $('#teamLogoA'), B: $('#teamLogoB') },
         teamLogoPreview: { A: $('#teamLogoAPreview'), B: $('#teamLogoBPreview') },
+        teamLogoPosBtn: $('#teamLogoPosBtn'),
         ytLogoPreview: { A: $('#ytLogoAPreview'), B: $('#ytLogoBPreview') },
         bgLayer: $('#bgLayer'),
         bgShade: $('#bgShade'),
@@ -3609,6 +3632,8 @@
         updateTitlePositionBtn();
         ui.body.style.setProperty('--team-logo-height', d.teamLogoHeight + 'px');
         ui.body.style.setProperty('--youtube-logo-height', d.youtubeLogoHeight + 'px');
+        ui.body.classList.toggle('team-logo-right', d.teamLogoPos === 'right');
+        updateTeamLogoPosBtn();
 
         const hasBg = Boolean(d.bgImage);
         ui.bgLayer.hidden = !hasBg;
@@ -3763,6 +3788,14 @@
         ui.titlePositionBtn.textContent = 'Название турнира: ' + (above ? 'СВЕРХУ' : 'СНИЗУ');
         ui.titlePositionBtn.classList.toggle('on', above);
         ui.titlePositionBtn.setAttribute('aria-pressed', above ? 'true' : 'false');
+      }
+
+      function updateTeamLogoPosBtn() {
+        const right = state.design.teamLogoPos === 'right';
+        if (!ui.teamLogoPosBtn) return;
+        ui.teamLogoPosBtn.textContent = 'Логотипы команд: ' + (right ? 'СПРАВА' : 'СЛЕВА');
+        ui.teamLogoPosBtn.classList.toggle('on', right);
+        ui.teamLogoPosBtn.setAttribute('aria-pressed', right ? 'true' : 'false');
       }
 
       let lastTitleLogosKey = null;
@@ -4655,6 +4688,16 @@
         render();
         sync.sendState();
         showToast(state.design.titlePosition === 'above' ? 'Название турнира сверху логотипов' : 'Название турнира снизу логотипов');
+      });
+
+      ui.teamLogoPosBtn.addEventListener('click', () => {
+        state.design.teamLogoPos = state.design.teamLogoPos === 'right' ? 'left' : 'right';
+        state.rev = Math.max(Date.now(), state.rev + 1);
+        updateTeamLogoPosBtn();
+        persist();
+        render();
+        sync.sendState();
+        showToast('Логотипы команд: ' + (state.design.teamLogoPos === 'right' ? 'справа' : 'слева'));
       });
 
       [['A', 'fTeamLogoA', 'teamLogoAClear'], ['B', 'fTeamLogoB', 'teamLogoBClear']].forEach(([team, inputId, clearId]) => {
