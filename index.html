@@ -362,7 +362,8 @@
     body.title-ticker .title-track .el-title {
       display: block;
       flex: 0 0 auto;
-      padding-right: 6vw;
+      /* Минимальный зазор между повторами, чтобы не крутилось пустое место. */
+      padding-right: clamp(8px, 1.2vw, 22px);
     }
 
     body.title-ticker .title-track .title-echo {
@@ -3946,7 +3947,7 @@
           // В бегущей строке копия должна быть лишь немного шире экрана:
           // так почти весь заголовок остаётся виден и быстро возвращается.
           const MIN_FIT = 0.06;
-          const target = Math.max(320, boxWidth * 1.2);
+          const target = Math.max(320, boxWidth * 1.03);
           // Ширина track складывается из всех копий, поэтому меряем одну копию
           // по тексту, а не по DOM-прямоугольнику.
           const cs0 = getComputedStyle(el);
