@@ -369,9 +369,11 @@
       display: block;
     }
 
+    /* Полоса состоит из одинаковых копий, и её собственная ширина равна
+       одной копии. Сдвиг ровно на неё даёт бесшовный повтор без скачка. */
     @keyframes title-marquee {
       from { transform: translateX(0); }
-      to { transform: translateX(-50%); }
+      to { transform: translateX(-100%); }
     }
 
     .title-logos {
@@ -3722,9 +3724,9 @@
           track.appendChild(clone);
           echoes.push(clone);
         }
-        // Раньше цикл растягивался до 60 с, поэтому длинный текст появлялся
-        // слишком медленно. Теперь скорость вдвое выше, а полный цикл не длиннее 18 с.
-        const seconds = Math.max(5, Math.min(18, (copyWidth * perHalf) / 160));
+        // Сдвиг равен ширине одной копии. Держим скорость около 260 px/s:
+        // надпись постоянно остаётся в поле зрения и успевает читаться.
+        const seconds = Math.max(6, Math.min(30, copyWidth / 260));
         track.style.setProperty('--title-marquee-duration', seconds + 's');
       }
 
