@@ -543,7 +543,7 @@
       justify-content: flex-end;
     }
 
-    /* Логотипы команд: кнопка в настройках переключает слева/справа. */
+    /* Логотипы команд: отдельные переключатели слева/справа для A и B. */
     .box-arena-name .el-team-logo { order: 1; }
     .box-arena-name .el-serve { order: 2; }
     .box-arena-name .el-arena-name { order: 3; }
@@ -552,15 +552,18 @@
     .box-arena-identity-away .box-arena-name {
       justify-content: flex-start !important;
     }
-    body.team-logo-right .box-arena-name::after { order: 0; }
-    body.team-logo-right .box-arena-name .el-arena-name { order: 1; }
-    body.team-logo-right .box-arena-name .el-serve { order: 2; }
-    body.team-logo-right .box-arena-name .el-team-logo { order: 3; }
-    body.team-logo-right .box-arena-identity-home .box-arena-name,
-    body.team-logo-right .box-arena-identity-away .box-arena-name {
-      justify-content: flex-end !important;
-    }
-    body.team-logo-right.style-ytsets .box-arena-name {
+    body.team-logo-a-right .box-arena-identity-home .box-arena-name::after { order: 0; }
+    body.team-logo-a-right .box-arena-identity-home .box-arena-name .el-arena-name { order: 1; }
+    body.team-logo-a-right .box-arena-identity-home .box-arena-name .el-serve { order: 2; }
+    body.team-logo-a-right .box-arena-identity-home .box-arena-name .el-team-logo { order: 3; }
+    body.team-logo-a-right .box-arena-identity-home .box-arena-name { justify-content: flex-end !important; }
+    body.team-logo-b-right .box-arena-identity-away .box-arena-name::after { order: 0; }
+    body.team-logo-b-right .box-arena-identity-away .box-arena-name .el-arena-name { order: 1; }
+    body.team-logo-b-right .box-arena-identity-away .box-arena-name .el-serve { order: 2; }
+    body.team-logo-b-right .box-arena-identity-away .box-arena-name .el-team-logo { order: 3; }
+    body.team-logo-b-right .box-arena-identity-away .box-arena-name { justify-content: flex-end !important; }
+    body.team-logo-a-right.style-ytsets .box-arena-identity-home .box-arena-name,
+    body.team-logo-b-right.style-ytsets .box-arena-identity-away .box-arena-name {
       padding-left: clamp(58px, 9vw, 190px);
       padding-right: clamp(12px, 2vw, 42px);
     }
@@ -2805,7 +2808,10 @@
           </div>
         </div>
         <div class="field full">
-          <button class="btn small" type="button" id="teamLogoPosBtn" aria-pressed="false">Логотипы команд: СЛЕВА</button>
+          <button class="btn small" type="button" id="teamLogoPosBtnA" aria-pressed="false">Логотип A: СЛЕВА</button>
+        </div>
+        <div class="field full">
+          <button class="btn small" type="button" id="teamLogoPosBtnB" aria-pressed="false">Логотип B: СЛЕВА</button>
         </div>
         <div class="field">
           <label for="fTeamLogoHeight">Размер логотипов команд, px</label>
@@ -3037,7 +3043,8 @@
           teamLogoA: '',
           teamLogoB: '',
           teamLogoHeight: 56,
-          teamLogoPos: 'left',
+          teamLogoPosA: 'left',
+          teamLogoPosB: 'left',
           youtubeLogoA: '',
           youtubeLogoB: '',
           youtubeLogoHeight: 56,
@@ -3128,7 +3135,14 @@
         s.design.teamLogoA = typeof s.design.teamLogoA === 'string' && s.design.teamLogoA.length <= 400000 ? s.design.teamLogoA : '';
         s.design.teamLogoB = typeof s.design.teamLogoB === 'string' && s.design.teamLogoB.length <= 400000 ? s.design.teamLogoB : '';
         s.design.teamLogoHeight = clamp(Math.round(Number(s.design.teamLogoHeight) || 56), 16, 600);
-        s.design.teamLogoPos = s.design.teamLogoPos === 'right' ? 'right' : 'left';
+        // Старое общее значение переносим на обе команды, только если оно было
+        // в исходных данных: после Object.assign в design уже есть значения по умолчанию.
+        const legacyPos = raw.design && (raw.design.teamLogoPos === 'right' || raw.design.teamLogoPos === 'left') ? raw.design.teamLogoPos : 'left';
+        const rawPosA = raw.design && raw.design.teamLogoPosA;
+        const rawPosB = raw.design && raw.design.teamLogoPosB;
+        s.design.teamLogoPosA = rawPosA === 'right' || rawPosA === 'left' ? rawPosA : legacyPos;
+        s.design.teamLogoPosB = rawPosB === 'right' || rawPosB === 'left' ? rawPosB : legacyPos;
+        delete s.design.teamLogoPos;
         s.design.youtubeLogoHeight = clamp(Math.round(Number(s.design.youtubeLogoHeight) || s.design.teamLogoHeight), 16, 600);
         s.design.youtubeLogoA = typeof s.design.youtubeLogoA === 'string' && s.design.youtubeLogoA.length <= 400000 ? s.design.youtubeLogoA : '';
         s.design.youtubeLogoB = typeof s.design.youtubeLogoB === 'string' && s.design.youtubeLogoB.length <= 400000 ? s.design.youtubeLogoB : '';
@@ -3223,7 +3237,7 @@
         logoPreview: $('#logoPreview'),
         teamLogo: { A: $('#teamLogoA'), B: $('#teamLogoB') },
         teamLogoPreview: { A: $('#teamLogoAPreview'), B: $('#teamLogoBPreview') },
-        teamLogoPosBtn: $('#teamLogoPosBtn'),
+        teamLogoPosBtn: { A: $('#teamLogoPosBtnA'), B: $('#teamLogoPosBtnB') },
         ytLogoPreview: { A: $('#ytLogoAPreview'), B: $('#ytLogoBPreview') },
         bgLayer: $('#bgLayer'),
         bgShade: $('#bgShade'),
@@ -3625,8 +3639,10 @@
         updateTitlePositionBtn();
         ui.body.style.setProperty('--team-logo-height', d.teamLogoHeight + 'px');
         ui.body.style.setProperty('--youtube-logo-height', d.youtubeLogoHeight + 'px');
-        ui.body.classList.toggle('team-logo-right', d.teamLogoPos === 'right');
-        updateTeamLogoPosBtn();
+        ui.body.classList.toggle('team-logo-a-right', d.teamLogoPosA === 'right');
+        ui.body.classList.toggle('team-logo-b-right', d.teamLogoPosB === 'right');
+        updateTeamLogoPosBtn('A');
+        updateTeamLogoPosBtn('B');
 
         const hasBg = Boolean(d.bgImage);
         ui.bgLayer.hidden = !hasBg;
@@ -3783,12 +3799,13 @@
         ui.titlePositionBtn.setAttribute('aria-pressed', above ? 'true' : 'false');
       }
 
-      function updateTeamLogoPosBtn() {
-        const right = state.design.teamLogoPos === 'right';
-        if (!ui.teamLogoPosBtn) return;
-        ui.teamLogoPosBtn.textContent = 'Логотипы команд: ' + (right ? 'СПРАВА' : 'СЛЕВА');
-        ui.teamLogoPosBtn.classList.toggle('on', right);
-        ui.teamLogoPosBtn.setAttribute('aria-pressed', right ? 'true' : 'false');
+      function updateTeamLogoPosBtn(team) {
+        const btn = ui.teamLogoPosBtn[team];
+        if (!btn) return;
+        const right = state.design['teamLogoPos' + team] === 'right';
+        btn.textContent = 'Логотип ' + team + ': ' + (right ? 'СПРАВА' : 'СЛЕВА');
+        btn.classList.toggle('on', right);
+        btn.setAttribute('aria-pressed', right ? 'true' : 'false');
       }
 
       let lastTitleLogosKey = null;
@@ -4683,14 +4700,17 @@
         showToast(state.design.titlePosition === 'above' ? 'Название турнира сверху логотипов' : 'Название турнира снизу логотипов');
       });
 
-      ui.teamLogoPosBtn.addEventListener('click', () => {
-        state.design.teamLogoPos = state.design.teamLogoPos === 'right' ? 'left' : 'right';
-        state.rev = Math.max(Date.now(), state.rev + 1);
-        updateTeamLogoPosBtn();
-        persist();
-        render();
-        sync.sendState();
-        showToast('Логотипы команд: ' + (state.design.teamLogoPos === 'right' ? 'справа' : 'слева'));
+      ['A', 'B'].forEach((team) => {
+        ui.teamLogoPosBtn[team].addEventListener('click', () => {
+          const key = 'teamLogoPos' + team;
+          state.design[key] = state.design[key] === 'right' ? 'left' : 'right';
+          state.rev = Math.max(Date.now(), state.rev + 1);
+          updateTeamLogoPosBtn(team);
+          persist();
+          render();
+          sync.sendState();
+          showToast('Логотип ' + team + ': ' + (state.design[key] === 'right' ? 'справа' : 'слева'));
+        });
       });
 
       [['A', 'fTeamLogoA', 'teamLogoAClear'], ['B', 'fTeamLogoB', 'teamLogoBClear']].forEach(([team, inputId, clearId]) => {
