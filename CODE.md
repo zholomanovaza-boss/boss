@@ -2690,7 +2690,7 @@
             <label class="scale-item">
               <span>Названия команд</span>
               <output data-scale-out="nameScale">100%</output>
-              <input type="range" name="nameScale" min="50" max="150" step="5" value="100">
+              <input type="range" name="nameScale" min="50" max="300" step="5" value="100">
             </label>
             <label class="scale-item">
               <span>Счёт</span>
@@ -2700,17 +2700,17 @@
             <label class="scale-item">
               <span>Блок Sets Won / Time Outs</span>
               <output data-scale-out="midScale">100%</output>
-              <input type="range" name="midScale" min="50" max="150" step="5" value="100">
+              <input type="range" name="midScale" min="50" max="250" step="5" value="100">
             </label>
             <label class="scale-item">
               <span>История партий</span>
               <output data-scale-out="setScale">100%</output>
-              <input type="range" name="setScale" min="50" max="150" step="5" value="100">
+              <input type="range" name="setScale" min="50" max="300" step="5" value="100">
             </label>
             <label class="scale-item">
               <span>Размер плашек у всех блоков</span>
               <output data-scale-out="panelScale">100%</output>
-              <input type="range" name="panelScale" min="70" max="140" step="5" value="100">
+              <input type="range" name="panelScale" min="70" max="200" step="5" value="100">
             </label>
           </div>
         </div>
@@ -2966,11 +2966,11 @@
       };
       const SCALE_LIMITS = {
         titleScale: [50, 300],
-        nameScale: [50, 150],
+        nameScale: [50, 300],
         scoreScale: [50, 500],
-        midScale: [50, 150],
-        setScale: [50, 150],
-        panelScale: [70, 140]
+        midScale: [50, 250],
+        setScale: [50, 300],
+        panelScale: [70, 200]
       };
 
       const defaultState = () => ({
