@@ -362,6 +362,9 @@
     body.title-ticker .title-track .el-title {
       display: block;
       flex: 0 0 auto;
+      /* Ширина копии равна её тексту, а не 100% всей полосы: иначе текст
+         занимает лишь малую долю копии и между словами крутится пустота. */
+      width: max-content;
       /* Минимальный зазор между повторами, чтобы не крутилось пустое место. */
       padding-right: clamp(8px, 1.2vw, 22px);
     }
@@ -374,7 +377,8 @@
        одной копии. Сдвиг ровно на неё даёт бесшовный повтор без скачка. */
     @keyframes title-marquee {
       from { transform: translateX(0); }
-      to { transform: translateX(-100%); }
+      /* Полоса содержит несколько копий: сдвиг ровно на одну из них. */
+      to { transform: translateX(calc(-100% / var(--title-copies, 1))); }
     }
 
     .title-logos {
@@ -3725,8 +3729,12 @@
           track.appendChild(clone);
           echoes.push(clone);
         }
-        // Сдвиг равен ширине одной копии. Держим скорость около 260 px/s:
-        // надпись постоянно остаётся в поле зрения и успевает читаться.
+        // Сдвиг анимации равен ширине одной копии: задаём число копий,
+        // чтобы translateX(-100% / N) сдвигал полосу ровно на неё.
+        const copies = track.querySelectorAll('.el-title').length;
+        track.style.setProperty('--title-copies', String(Math.max(1, copies)));
+        // Держим скорость около 260 px/s: надпись постоянно остаётся
+        // в поле зрения и успевает читаться.
         const seconds = Math.max(6, Math.min(30, copyWidth / 260));
         track.style.setProperty('--title-marquee-duration', seconds + 's');
       }
