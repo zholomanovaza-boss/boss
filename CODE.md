@@ -2678,7 +2678,7 @@
             <label class="scale-item">
               <span>Заголовок матча</span>
               <output data-scale-out="titleScale">100%</output>
-              <input type="range" name="titleScale" min="50" max="150" step="5" value="100">
+              <input type="range" name="titleScale" min="50" max="300" step="5" value="100">
             </label>
             <label class="scale-item">
               <span>Названия команд</span>
@@ -2958,7 +2958,7 @@
         panelScale: '--panel-scale'
       };
       const SCALE_LIMITS = {
-        titleScale: [50, 150],
+        titleScale: [50, 300],
         nameScale: [50, 150],
         scoreScale: [50, 500],
         midScale: [50, 150],
@@ -3962,7 +3962,10 @@
           // В бегущей строке копия должна быть лишь немного шире экрана:
           // так почти весь заголовок остаётся виден и быстро возвращается.
           const MIN_FIT = 0.06;
-          const target = Math.max(320, boxWidth * 1.03);
+          // Ползунок размера должен реально менять буквы в бегущей строке:
+          // вместе с масштабом растёт и допустимая ширина копии.
+          const scale = Math.max(0.5, (Number(state.design.titleScale) || 100) / 100);
+          const target = Math.max(320, boxWidth * 1.03 * scale);
           // Ширина track складывается из всех копий, поэтому меряем одну копию
           // по тексту, а не по DOM-прямоугольнику.
           const cs0 = getComputedStyle(el);
