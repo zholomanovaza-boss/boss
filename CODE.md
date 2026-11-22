@@ -311,8 +311,9 @@
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
     }
 
-    /* Полностью убираем плашку заголовка, если он выключен в настройках. */
-    body.title-hidden .box-title {
+    /* Выключаем только текст названия турнира: логотипы в шапке остаются видимыми. */
+    body.title-hidden .title-track,
+    body.title-hidden .set-meta {
       display: none !important;
     }
 
@@ -4600,7 +4601,7 @@
         persist();
         render();
         sync.sendState();
-        showToast(state.design.titleVisible === false ? 'Название турнира выключено' : 'Название турнира включено');
+        showToast(state.design.titleVisible === false ? 'Название турнира выключено — логотипы остаются' : 'Название турнира включено');
       });
 
       ui.titlePositionBtn.addEventListener('click', () => {
