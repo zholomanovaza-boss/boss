@@ -550,6 +550,11 @@
       justify-content: flex-end;
     }
 
+    /* Логотип команды B прижат к левому краю плашки, перед подачей и названием. */
+    .box-arena-identity-away .box-arena-name {
+      justify-content: flex-start !important;
+    }
+
     .box-arena-name {
       display: flex;
       align-items: center;
@@ -2529,6 +2534,7 @@
 
           <div class="box-arena-identity box-arena-identity-away">
             <div class="box-arena-name">
+              <img class="el-team-logo" id="teamLogoB" alt="Логотип команды B" hidden>
               <span class="el-serve" id="serveB" data-team="B" title="Подача: нажмите, чтобы переключить">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
                   <circle cx="12" cy="12" r="9" />
@@ -2537,7 +2543,6 @@
                   <path d="M3.4 9.2c4 1.7 7.9 1.7 11.9 0M3.4 14.8c4-1.7 7.9-1.7 11.9 0" />
                 </svg>
               </span>
-              <img class="el-team-logo" id="teamLogoB" alt="Логотип команды B" hidden>
               <span class="el-arena-name" contenteditable spellcheck="false" data-team="B" id="nameB">НООКАТ</span>
             </div>
           </div>
